@@ -1,0 +1,90 @@
+name: NovaHQ baseline image
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  SOURCE_IMAGE: lfnovo/open_notebook@sha256:e53f90d6153fcf4a64604d9a0c12cb0428a32cfb8dbcbb72e81ab12c013ee330
+  TARGET_IMAGE: ghcr.io/heli-konton/open-notebook
+
+jobs:
+  copy-and-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull the exact image currently deployed by NovaHQ
+        run: |
+          docker pull "$SOURCE_IMAGE"
+          docker image inspect "$SOURCE_IMAGE" --format '{{.Id}} {{json .RepoDigests}}'
+
+      - name: Start isolated SurrealDB
+        run: |
+          docker network create nova-open-notebook-test
+          docker run -d --name nova-surreal --network nova-open-notebook-test \
+            surrealdb/surrealdb:v2 \
+            start --log info --user root --pass root memory
+
+      - name: Start isolated Open Notebook
+        run: |
+          docker run -d --name nova-open-notebook --network nova-open-notebook-test \
+            -p 127.0.0.1:15055:5055 -p 127.0.0.1:18502:8502 \
+            -e OPEN_NOTEBOOK_ENCRYPTION_KEY=nova-baseline-ephemeral-test-key \
+            -e OPEN_NOTEBOOK_PASSWORD=nova-baseline-ephemeral-password \
+            -e API_URL=http://127.0.0.1:18502 \
+            -e INTERNAL_API_URL=http://localhost:5055 \
+            -e SURREAL_URL=ws://nova-surreal:8000/rpc \
+            -e SURREAL_USER=root \
+            -e SURREAL_PASSWORD=root \
+            -e SURREAL_NAMESPACE=open_notebook \
+            -e SURREAL_DATABASE=open_notebook \
+            "$SOURCE_IMAGE"
+
+      - name: Verify API and browser UI
+        run: |
+          api=000
+          ui=000
+          for attempt in $(seq 1 60); do
+            api=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 http://127.0.0.1:15055/health || true)
+            ui=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 http://127.0.0.1:18502/ || true)
+            if [[ "$api" == "200" && ( "$ui" == "200" || "$ui" == "307" ) ]]; then
+              break
+            fi
+            sleep 2
+          done
+          echo "api=$api ui=$ui"
+          test "$api" = 200
+          test "$ui" = 200 -o "$ui" = 307
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish NovaHQ baseline tags
+        run: |
+          docker tag "$SOURCE_IMAGE" "$TARGET_IMAGE:v1.14.0-nova-baseline"
+          docker tag "$SOURCE_IMAGE" "$TARGET_IMAGE:nova-main"
+          docker push "$TARGET_IMAGE:v1.14.0-nova-baseline"
+          docker push "$TARGET_IMAGE:nova-main"
+
+      - name: Verify published image
+        run: |
+          docker buildx imagetools inspect "$TARGET_IMAGE:v1.14.0-nova-baseline"
+          docker buildx imagetools inspect "$TARGET_IMAGE:nova-main"
+
+      - name: Diagnostic logs on failure
+        if: failure()
+        run: |
+          docker logs nova-surreal 2>&1 || true
+          docker logs nova-open-notebook 2>&1 || true
+
+      - name: Remove isolated test containers
+        if: always()
+        run: |
+          docker rm -f nova-open-notebook nova-surreal 2>/dev/null || true
+          docker network rm nova-open-notebook-test 2>/dev/null || true
