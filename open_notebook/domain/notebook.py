@@ -10,10 +10,11 @@ from surrealdb import RecordID
 
 from open_notebook.database.repository import ensure_record_id, repo_query
 from open_notebook.domain.base import ObjectModel
+from open_notebook.domain.folder_item import FolderItem
 from open_notebook.exceptions import DatabaseOperationError, InvalidInputError
 
 
-class Notebook(ObjectModel):
+class Notebook(FolderItem):
     table_name: ClassVar[str] = "notebook"
     name: str
     description: str

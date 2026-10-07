@@ -1,6 +1,32 @@
 import type { TranslationShape } from '../en-US';
 
 export const plPL = {
+  folders: {
+    "title": "Foldery",
+    "all": "Wszystkie",
+    "unfiled": "Bez folderu",
+    "create": "Nowy folder",
+    "name": "Nazwa folderu",
+    "move": "Przenieś do folderu",
+    "saved": "Folder zaktualizowany",
+    "error": "Nie udało się zaktualizować folderów. Spróbuj ponownie.",
+    "renameTitle": "Zmień nazwę folderu",
+    "deleteTitle": "Usuń folder",
+    "description": "Organizuj bibliotekę za pomocą folderów bez podfolderów.",
+    "deleteDescription": "Elementy pozostaną bez folderu. Notatniki, źródła i dźwięk nie zostaną usunięte."
+  },
+  player: {
+    "expand": "Rozwiń odtwarzacz",
+    "minimize": "Wróć do biblioteki",
+    "title": "Teraz odtwarzane",
+    "play": "Odtwórz",
+    "pause": "Wstrzymaj",
+    "stop": "Zatrzymaj i wyzeruj",
+    "rewind": "Cofnij o 15 sekund",
+    "seek": "Pozycja odtwarzania",
+    "close": "Zamknij odtwarzacz"
+  },
+
   common: {
     search: "Szukaj...",
     create: "Nowy",
@@ -38,7 +64,7 @@ export const plPL = {
     podcast: "Podcast",
     quickActions: "Szybkie akcje",
     quickActionsDesc: "Nawigacja, wyszukiwanie, pytania, motyw",
-    appName: "Open Notebook",
+    appName: "nova_notes",
     add: "Dodaj",
     remove: "Usuń",
     confirm: "Potwierdź",
@@ -177,7 +203,7 @@ export const plPL = {
   },
   connectionErrors: {
     apiTitle: "Nie można połączyć się z serwerem API",
-    apiDesc: "Nie udało się nawiązać połączenia z serwerem API Open Notebook",
+    apiDesc: "Nie udało się nawiązać połączenia z serwerem API nova_notes",
     dbTitle: "Połączenie z bazą danych nie powiodło się",
     dbDesc: "Serwer API działa, ale baza danych jest niedostępna",
     troubleshooting: "Zwykle oznacza to, że:",
@@ -191,7 +217,7 @@ export const plPL = {
     setApiUrl: "Ustaw zmienną środowiskową API_URL:",
     checkSurreal: "Sprawdź, czy SurrealDB jest uruchomiony:",
     seeDocumentation: "Szczegółowe instrukcje konfiguracji znajdziesz tutaj:",
-    docLink: "Dokumentacja Open Notebook",
+    docLink: "Dokumentacja nova_notes",
     showTechnical: "Pokaż szczegóły techniczne",
     attemptedUrl: "Próbowany adres URL",
     message: "Komunikat",
@@ -203,7 +229,7 @@ export const plPL = {
     localDevLabel: "Dla środowiska lokalnego",
   },
   auth: {
-    loginTitle: "Open Notebook",
+    loginTitle: "nova_notes",
     loginDesc: "Wpisz hasło, aby uzyskać dostęp do aplikacji",
     passwordPlaceholder: "Hasło",
     signingIn: "Logowanie...",
@@ -781,7 +807,7 @@ export const plPL = {
     visionEnabled: "Opisuj obrazy i wykresy",
     visionHelp: "Używa modelu wizyjnego do opisywania obrazów i wyodrębniania danych z wykresów przy użyciu silnika Docling. Znacznie wolniejsze i może wywoływać model wizyjny.",
     autoDeletePlaceholder: "Wybierz opcję automatycznego usuwania",
-    filesHelp: "Po przesłaniu i przetworzeniu plików nie są one już potrzebne. Większość użytkowników powinna pozwolić Open Notebook na automatyczne usuwanie przesłanych plików z folderu przesyłania.",
+    filesHelp: "Po przesłaniu i przetworzeniu plików nie są one już potrzebne. Większość użytkowników powinna pozwolić nova_notes na automatyczne usuwanie przesłanych plików z folderu przesyłania.",
     loadFailed: "Nie udało się załadować ustawień",
   },
   advanced: {
@@ -794,7 +820,7 @@ export const plPL = {
     latestVersion: "Najnowsza wersja",
     status: "Status",
     updateAvailable: "Dostępna wersja {{version}}",
-    updateAvailableDesc: "Dostępna jest nowa wersja Open Notebook.",
+    updateAvailableDesc: "Dostępna jest nowa wersja nova_notes.",
     upToDate: "Aktualna",
     unknown: "Nieznana",
     viewOnGithub: "Zobacz na GitHubie",
@@ -876,8 +902,8 @@ export const plPL = {
     modelTypeHint: "Wybierz typ modeli, które chcesz dodać. Jeśli potrzebujesz różnych typów, dodaj je w osobnych partiach.",
     deleteModel: "Usuń model",
     defaultAssignments: "Domyślne przypisania modeli",
-    defaultAssignmentsDesc: "Skonfiguruj, których modeli używać do różnych celów w Open Notebook",
-    missingRequiredModels: "Brakuje wymaganych modeli: {{models}}. Bez nich Open Notebook może nie działać poprawnie.",
+    defaultAssignmentsDesc: "Skonfiguruj, których modeli używać do różnych celów w nova_notes",
+    missingRequiredModels: "Brakuje wymaganych modeli: {{models}}. Bez nich nova_notes może nie działać poprawnie.",
     selectModelPlaceholder: "Wybierz model",
     noneOption: "Brak",
     noneFallbackToChat: "Użyj rezerwowego (domyślny czat)",
@@ -924,7 +950,7 @@ export const plPL = {
   },
   apiKeys: {
     title: "Skonfiguruj swoje AI za pomocą własnych kluczy API",
-    description: "Przechowuj klucze API bezpiecznie w bazie danych, aby włączyć dostawców AI w Open Notebook.",
+    description: "Przechowuj klucze API bezpiecznie w bazie danych, aby włączyć dostawców AI w nova_notes.",
     encryptionRequired: "Klucz szyfrowania nie został skonfigurowany",
     encryptionRequiredDescription: "Ustaw zmienną środowiskową OPEN_NOTEBOOK_ENCRYPTION_KEY na dowolny tajny ciąg, aby umożliwić przechowywanie kluczy API w bazie danych.",
     configured: "Skonfigurowano",

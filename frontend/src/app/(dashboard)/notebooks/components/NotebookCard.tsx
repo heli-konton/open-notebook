@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { FolderAssignment } from '@/components/folders/FolderAssignment'
 import { NotebookResponse } from '@/lib/types/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -101,6 +102,7 @@ export function NotebookCard({ notebook }: NotebookCardProps) {
           </CardHeader>
           
           <CardContent>
+            <FolderAssignment kind="notebook" id={notebook.id} folder_id={notebook.folder_id} />
             <CardDescription className="line-clamp-2 text-sm">
               {notebook.description || t('chat.noDescription')}
             </CardDescription>

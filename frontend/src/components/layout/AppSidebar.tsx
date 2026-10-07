@@ -76,7 +76,7 @@ const getNavigation = (t: TFunction) => [
 
 type CreateTarget = 'source' | 'notebook' | 'podcast'
 
-export function AppSidebar() {
+export function AppSidebar({ children }: { children?: React.ReactNode }) {
   const { t } = useTranslation()
   const navigation = getNavigation(t)
   const pathname = usePathname()
@@ -122,7 +122,7 @@ export function AppSidebar() {
             <div className="relative flex items-center justify-center w-full">
               <Image
                 src="/logo.svg"
-                alt="Open Notebook"
+                alt={t('common.appName')}
                 width={32}
                 height={32}
                 className="transition-opacity group-hover:opacity-0"
@@ -288,6 +288,7 @@ export function AppSidebar() {
                   )
                 })}
               </div>
+              {index === 1 && !isCollapsed && children}
             </div>
           ))}
         </nav>

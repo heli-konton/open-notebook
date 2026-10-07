@@ -1,6 +1,32 @@
 import type { TranslationShape } from '../en-US';
 
 export const ruRU = {
+  folders: {
+    "title": "Папки",
+    "all": "Все",
+    "unfiled": "Без папки",
+    "create": "Новая папка",
+    "name": "Название папки",
+    "move": "Переместить в папку",
+    "saved": "Папка обновлена",
+    "error": "Не удалось обновить папки. Повторите попытку.",
+    "renameTitle": "Переименовать папку",
+    "deleteTitle": "Удалить папку",
+    "description": "Организуйте библиотеку с помощью папок без вложенности.",
+    "deleteDescription": "Элементы останутся без папки. Блокноты, источники и аудио не будут удалены."
+  },
+  player: {
+    "expand": "Развернуть плеер",
+    "minimize": "Вернуться в библиотеку",
+    "title": "Сейчас играет",
+    "play": "Воспроизвести",
+    "pause": "Пауза",
+    "stop": "Остановить и сбросить",
+    "rewind": "Назад на 15 секунд",
+    "seek": "Позиция воспроизведения",
+    "close": "Закрыть плеер"
+  },
+
   common: {
     search: "Поиск...",
     create: "Создать",
@@ -38,7 +64,7 @@ export const ruRU = {
     podcast: "Подкаст",
     quickActions: "Быстрые действия",
     quickActionsDesc: "Навигация, поиск, запрос, тема",
-    appName: "Open Notebook",
+    appName: "nova_notes",
     add: "Добавить",
     remove: "Удалить",
     confirm: "Подтвердить",
@@ -177,7 +203,7 @@ export const ruRU = {
   },
   connectionErrors: {
     apiTitle: "Не удаётся подключиться к API-серверу",
-    apiDesc: "API-сервер Open Notebook недоступен",
+    apiDesc: "API-сервер nova_notes недоступен",
     dbTitle: "Ошибка подключения к базе данных",
     dbDesc: "API-сервер работает, но база данных недоступна",
     troubleshooting: "Обычно это означает:",
@@ -191,7 +217,7 @@ export const ruRU = {
     setApiUrl: "Установите переменную окружения API_URL:",
     checkSurreal: "Проверьте, запущен ли SurrealDB:",
     seeDocumentation: "Подробные инструкции по настройке см. в:",
-    docLink: "Документация Open Notebook",
+    docLink: "Документация nova_notes",
     showTechnical: "Показать техническую информацию",
     attemptedUrl: "Использованный URL",
     message: "Сообщение",
@@ -203,7 +229,7 @@ export const ruRU = {
     localDevLabel: "Для локальной разработки",
   },
   auth: {
-    loginTitle: "Open Notebook",
+    loginTitle: "nova_notes",
     loginDesc: "Введите пароль для доступа к приложению",
     passwordPlaceholder: "Пароль",
     signingIn: "Вход...",
@@ -781,7 +807,7 @@ export const ruRU = {
     visionEnabled: "Описывать изображения и диаграммы",
     visionHelp: "Использует модель зрения для описания изображений и извлечения данных диаграмм при использовании движка Docling. Значительно медленнее и может вызывать модель зрения.",
     autoDeletePlaceholder: "Выберите опцию автоудаления",
-    filesHelp: "После загрузки и обработки файлы больше не нужны. Большинству пользователей следует разрешить Open Notebook автоматически удалять загруженные файлы из папки загрузок.",
+    filesHelp: "После загрузки и обработки файлы больше не нужны. Большинству пользователей следует разрешить nova_notes автоматически удалять загруженные файлы из папки загрузок.",
     loadFailed: "Не удалось загрузить настройки",
   },
   advanced: {
@@ -794,7 +820,7 @@ export const ruRU = {
     latestVersion: "Последняя версия",
     status: "Статус",
     updateAvailable: "Доступна версия {{version}}",
-    updateAvailableDesc: "Доступна новая версия Open Notebook.",
+    updateAvailableDesc: "Доступна новая версия nova_notes.",
     upToDate: "Актуальная версия",
     unknown: "Неизвестно",
     viewOnGithub: "Посмотреть на GitHub",
@@ -876,8 +902,8 @@ export const ruRU = {
     modelTypeHint: "Выберите тип для добавляемых моделей. Если нужны разные типы, добавляйте их отдельными партиями.",
     deleteModel: "Удалить модель",
     defaultAssignments: "Назначение моделей по умолчанию",
-    defaultAssignmentsDesc: "Настройте, какие модели использовать для различных задач в Open Notebook",
-    missingRequiredModels: "Отсутствуют необходимые модели: {{models}}. Open Notebook может работать некорректно без них.",
+    defaultAssignmentsDesc: "Настройте, какие модели использовать для различных задач в nova_notes",
+    missingRequiredModels: "Отсутствуют необходимые модели: {{models}}. nova_notes может работать некорректно без них.",
     selectModelPlaceholder: "Выберите модель",
     noneOption: "Нет",
     noneFallbackToChat: "Использовать запасной вариант (чат по умолчанию)",
@@ -924,7 +950,7 @@ export const ruRU = {
   },
   apiKeys: {
     title: "Настройте ИИ с помощью собственных API-ключей",
-    description: "Храните API-ключи в базе данных для безопасного подключения провайдеров ИИ в Open Notebook.",
+    description: "Храните API-ключи в базе данных для безопасного подключения провайдеров ИИ в nova_notes.",
     encryptionRequired: "Ключ шифрования не настроен",
     encryptionRequiredDescription: "Установите переменную окружения OPEN_NOTEBOOK_ENCRYPTION_KEY в любую секретную строку для хранения API-ключей в базе данных.",
     configured: "Настроено",

@@ -2,7 +2,7 @@
 export const themeScript = `
 (function() {
   try {
-    var theme = JSON.parse(localStorage.getItem('theme-storage') || '{}').state?.theme || 'system';
+    var theme = JSON.parse(localStorage.getItem('theme-storage') || '{}').state?.theme || 'dark';
     var systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     var effectiveTheme = theme === 'system' ? (systemPrefersDark ? 'dark' : 'light') : theme;
     
@@ -10,9 +10,9 @@ export const themeScript = `
     document.documentElement.classList.add(effectiveTheme);
     document.documentElement.setAttribute('data-theme', effectiveTheme);
   } catch (e) {
-    // Fallback to light theme
-    document.documentElement.classList.add('light');
-    document.documentElement.setAttribute('data-theme', 'light');
+    // Fallback to the graphite theme
+    document.documentElement.classList.add('dark');
+    document.documentElement.setAttribute('data-theme', 'dark');
   }
 })();
 `

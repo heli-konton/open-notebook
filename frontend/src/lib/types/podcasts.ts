@@ -76,6 +76,7 @@ export interface Language {
 }
 
 export interface PodcastEpisode {
+  folder_id?: string | null
   id: string
   name: string
   episode_profile: EpisodeProfileSnapshot

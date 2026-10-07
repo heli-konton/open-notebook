@@ -107,6 +107,7 @@ def _delete_episode_audio(episode: PodcastEpisode, episode_id: str) -> None:
 
 
 class PodcastEpisodeResponse(BaseModel):
+    folder_id: Optional[str] = None
     id: str
     name: str
     episode_profile: dict
@@ -224,6 +225,7 @@ async def list_podcast_episodes():
             response_episodes.append(
                 PodcastEpisodeResponse(
                     id=str(episode.id),
+                    folder_id=episode.folder_id,
                     name=episode.name,
                     episode_profile=_with_resolved_model_fields(
                         episode.episode_profile,
@@ -287,6 +289,7 @@ async def get_podcast_episode(episode_id: str):
         models_by_id = await _resolve_snapshot_models([episode])
 
         return PodcastEpisodeResponse(
+            folder_id=episode.folder_id,
             id=str(episode.id),
             name=episode.name,
             episode_profile=_with_resolved_model_fields(

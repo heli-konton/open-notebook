@@ -108,6 +108,7 @@ async def get_notebooks(
         return [
             NotebookResponse(
                 id=str(nb.get("id", "")),
+                folder_id=nb.get("folder_id"),
                 name=nb.get("name", ""),
                 description=nb.get("description", ""),
                 archived=nb.get("archived", False),
@@ -260,6 +261,7 @@ async def get_notebook(notebook_id: str):
         nb = result[0]
         return NotebookResponse(
             id=str(nb.get("id", "")),
+            folder_id=nb.get("folder_id"),
             name=nb.get("name", ""),
             description=nb.get("description", ""),
             archived=nb.get("archived", False),
@@ -308,6 +310,7 @@ async def update_notebook(notebook_id: str, notebook_update: NotebookUpdate):
             nb = result[0]
             return NotebookResponse(
                 id=str(nb.get("id", "")),
+                folder_id=nb.get("folder_id"),
                 name=nb.get("name", ""),
                 description=nb.get("description", ""),
                 archived=nb.get("archived", False),

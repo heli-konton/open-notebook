@@ -16,6 +16,7 @@ interface NotebookListProps {
   isLoading: boolean
   title: string
   collapsible?: boolean
+  hideHeading?: boolean
   emptyTitle?: string
   emptyDescription?: string
   onAction?: () => void
@@ -27,6 +28,7 @@ export function NotebookList({
   isLoading, 
   title, 
   collapsible = false,
+  hideHeading = false,
   emptyTitle,
   emptyDescription,
   onAction,
@@ -62,7 +64,7 @@ export function NotebookList({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      {!hideHeading && <div className="flex items-center gap-2">
         {collapsible && (
           <Button
             variant="ghost"
@@ -78,7 +80,7 @@ export function NotebookList({
         )}
         <h2 className="text-lg font-semibold">{title}</h2>
         <span className="text-sm text-muted-foreground">({notebooks.length})</span>
-      </div>
+      </div>}
 
       {isExpanded && (
         viewMode === 'list' ? (

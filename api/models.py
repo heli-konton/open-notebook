@@ -18,6 +18,7 @@ class NotebookUpdate(BaseModel):
 
 
 class NotebookResponse(BaseModel):
+    folder_id: Optional[str] = None
     id: str
     name: str
     description: str

@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { getDateLocale } from '@/lib/utils/date-locale'
 import { InfoIcon, RefreshCcw, Trash2 } from 'lucide-react'
 
-import apiClient from '@/lib/api/client'
-import { resolvePodcastAssetUrl } from '@/lib/api/podcasts'
+import { usePodcastPlayer } from './PodcastPlayer'
+import { FolderAssignment } from '@/components/folders/FolderAssignment'
 import { EpisodeStatus, FAILED_EPISODE_STATUSES, PodcastEpisode } from '@/lib/types/podcasts'
 import { cn } from '@/lib/utils'
 import {
@@ -33,6 +33,8 @@ import {
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { EpisodeArtwork } from './EpisodeArtwork'
+import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import type { TFunction } from 'i18next'
 
@@ -155,51 +157,14 @@ function extractTranscriptEntries(transcript: unknown): TranscriptEntry[] {
 
 export function EpisodeCard({ episode, onDelete, deleting, onRetry, retrying }: EpisodeCardProps) {
   const { t, language } = useTranslation()
-  const [audioSrc, setAudioSrc] = useState<string | undefined>()
-  const [audioError, setAudioError] = useState<string | null>(null)
+  const player = usePodcastPlayer()
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [actionsOpen, setActionsOpen] = useState(false)
+  const isMobile = useMediaQuery('(max-width: 767px)')
 
   const outlineSegments = useMemo(() => extractOutlineSegments(episode.outline), [episode.outline])
   const transcriptEntries = useMemo(() => extractTranscriptEntries(episode.transcript), [episode.transcript])
 
-  useEffect(() => {
-    let revokeUrl: string | undefined
-    setAudioError(null)
-
-    // If backend exposed a protected endpoint, fetch it with auth headers
-    const loadProtectedAudio = async () => {
-      // First resolve the audio URL
-      const directAudioUrl = await resolvePodcastAssetUrl(episode.audio_url ?? episode.audio_file)
-
-      if (!directAudioUrl || !episode.audio_url) {
-        setAudioSrc(directAudioUrl)
-        return
-      }
-
-      try {
-        // apiClient attaches the auth header; directAudioUrl is absolute so
-        // the dynamic baseURL is ignored.
-        const response = await apiClient.get<Blob>(directAudioUrl, {
-          responseType: 'blob',
-        })
-
-        revokeUrl = URL.createObjectURL(response.data)
-        setAudioSrc(revokeUrl)
-      } catch (error) {
-        console.error('Unable to load podcast audio', error)
-        setAudioError(t('podcasts.audioUnavailable'))
-        setAudioSrc(undefined)
-      }
-    }
-
-    void loadProtectedAudio()
-
-    return () => {
-      if (revokeUrl) {
-        URL.revokeObjectURL(revokeUrl)
-      }
-    }
-  }, [episode.audio_url, episode.audio_file, t])
 
   const distance = episode.created
     ? formatDistanceToNow(new Date(episode.created), {
@@ -213,7 +178,7 @@ export function EpisodeCard({ episode, onDelete, deleting, onRetry, retrying }: 
     : null
 
   const handleDelete = () => {
-    void onDelete(episode.id)
+    void Promise.resolve(onDelete(episode.id)).then(() => player.clear(episode.id)).catch(() => {})
   }
 
   const handleRetry = () => {
@@ -225,10 +190,11 @@ export function EpisodeCard({ episode, onDelete, deleting, onRetry, retrying }: 
   const isFailed = FAILED_EPISODE_STATUSES.includes(episode.job_status as EpisodeStatus)
 
   return (
-    <Card className="shadow-sm">
+    <Card className="episode-card shadow-sm">
       <CardContent className="space-y-4 p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
+        <div className="episode-card-layout">
+          <EpisodeArtwork />
+          <div className="episode-metadata space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-base font-semibold text-foreground">
                 {episode.name}
@@ -240,7 +206,11 @@ export function EpisodeCard({ episode, onDelete, deleting, onRetry, retrying }: 
               {createdLabel ? ` • ${createdLabel}` : ''}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="episode-actions">
+            {episode.audio_url && <Button className="episode-play" aria-label={t(player.episode?.id === episode.id && player.playing ? 'player.pause' : 'player.play')} onClick={() => void player.select(episode)}>{t(player.episode?.id === episode.id && player.playing ? 'player.pause' : 'player.play')}</Button>}
+            {isMobile && <Button variant="ghost" aria-label={t('common.actions')} aria-expanded={actionsOpen} onClick={() => setActionsOpen(open => !open)}>•••</Button>}
+            {(!isMobile || actionsOpen) && <div className="episode-management-actions">
+            <FolderAssignment kind="podcast" id={episode.id} folder_id={episode.folder_id} />
             <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -256,11 +226,6 @@ export function EpisodeCard({ episode, onDelete, deleting, onRetry, retrying }: 
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 overflow-hidden">
-                  {audioSrc ? (
-                    <audio controls preload="none" src={audioSrc} className="w-full" />
-                  ) : audioError ? (
-                    <p className="text-sm text-destructive">{audioError}</p>
-                  ) : null}
 
                   <Tabs defaultValue="summary" className="h-[60vh] flex flex-col">
                     <TabsList className="grid w-full grid-cols-3">
@@ -425,14 +390,10 @@ export function EpisodeCard({ episode, onDelete, deleting, onRetry, retrying }: 
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            </div>}
           </div>
         </div>
 
-        {audioSrc ? (
-          <audio controls preload="none" src={audioSrc} className="w-full" />
-        ) : audioError ? (
-          <p className="text-sm text-destructive">{audioError}</p>
-        ) : null}
 
         {isFailed && episode.error_message ? (
           <div className="rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/30">

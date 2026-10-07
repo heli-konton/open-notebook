@@ -1,5 +1,17 @@
 <a id="readme-top"></a>
 
+# nova_notes
+
+This fork adds persistent notebook/podcast folders and a responsive
+playback-focused interface to **Open Notebook**. The user-facing name is
+`nova_notes`; existing `open_notebook` Python namespaces, environment variables
+and API paths remain compatible. Open Notebook upstream attribution, community
+links and the MIT license below are retained.
+
+See [nova_notes usage](docs/3-USER-GUIDE/nova-notes.md) and
+[the implementation decision](docs/7-DEVELOPMENT/decisions/ADR-008-flat-folders-and-persistent-player.md).
+
+
 <!-- [![Contributors][contributors-shield]][contributors-url] -->
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]

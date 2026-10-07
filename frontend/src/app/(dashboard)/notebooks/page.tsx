@@ -2,6 +2,9 @@
 
 import { useMemo, useState } from 'react'
 
+import { useFolders } from '@/lib/hooks/use-folders'
+import { FolderCollections } from '@/components/folders/FolderCollections'
+import { FolderPanel, filterFolderItems } from '@/components/folders/FolderPanel'
 import { AppShell } from '@/components/layout/AppShell'
 import { NotebookList } from './components/NotebookList'
 import { RecentlyViewed } from './components/RecentlyViewed'
@@ -16,6 +19,9 @@ import { useNotebookViewStore } from '@/lib/stores/notebook-view-store'
 export default function NotebooksPage() {
   const { t } = useTranslation()
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [folder, setFolder] = useState('all')
+  const [archiveOpen, setArchiveOpen] = useState(false)
+  const folders = useFolders('notebook')
   const [searchTerm, setSearchTerm] = useState('')
   const viewMode = useNotebookViewStore((state) => state.viewMode)
   const setViewMode = useNotebookViewStore((state) => state.setViewMode)
@@ -29,33 +35,33 @@ export default function NotebooksPage() {
       return undefined
     }
     if (!normalizedQuery) {
-      return notebooks
+      return filterFolderItems(notebooks, folder)
     }
-    return notebooks.filter((notebook) =>
+    return filterFolderItems(notebooks, folder).filter((notebook) =>
       notebook.name.toLowerCase().includes(normalizedQuery)
     )
-  }, [notebooks, normalizedQuery])
+  }, [notebooks, normalizedQuery, folder])
 
   const filteredArchived = useMemo(() => {
     if (!archivedNotebooks) {
       return undefined
     }
     if (!normalizedQuery) {
-      return archivedNotebooks
+      return filterFolderItems(archivedNotebooks, folder)
     }
-    return archivedNotebooks.filter((notebook) =>
+    return filterFolderItems(archivedNotebooks, folder).filter((notebook) =>
       notebook.name.toLowerCase().includes(normalizedQuery)
     )
-  }, [archivedNotebooks, normalizedQuery])
+  }, [archivedNotebooks, normalizedQuery, folder])
 
   const hasArchived = (archivedNotebooks?.length ?? 0) > 0
   const isSearching = normalizedQuery.length > 0
 
   return (
-    <AppShell>
+    <AppShell libraryNavigation={<FolderPanel kind="notebook" items={[...(notebooks ?? []), ...(archivedNotebooks ?? [])]} value={folder} onChange={setFolder} />}>
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold">{t('notebooks.title')}</h1>
             <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -102,29 +108,15 @@ export default function NotebooksPage() {
           </div>
         </div>
         
-        <div className="space-y-8">
-          <RecentlyViewed />
-
-          <NotebookList 
-            notebooks={filteredActive} 
-            isLoading={isLoading}
-            title={t('notebooks.activeNotebooks')}
-            emptyTitle={isSearching ? t('common.noMatches') : undefined}
-            emptyDescription={isSearching ? t('common.tryDifferentSearch') : undefined}
-            onAction={!isSearching ? () => setCreateDialogOpen(true) : undefined}
-            actionLabel={!isSearching ? t('notebooks.newNotebook') : undefined}
-          />
-          
-          {hasArchived && (
-            <NotebookList 
-              notebooks={filteredArchived} 
-              isLoading={false}
-              title={t('notebooks.archivedNotebooks')}
-              collapsible
-              emptyTitle={isSearching ? t('common.noMatches') : undefined}
-              emptyDescription={isSearching ? t('common.tryDifferentSearch') : undefined}
-            />
-          )}
+        <div className="collection-layout">
+          <div className="space-y-8 min-w-0">
+            {folder === 'all' && <RecentlyViewed />}
+            {isLoading || !filteredActive?.length ? <NotebookList notebooks={filteredActive} isLoading={isLoading} title={t('notebooks.activeNotebooks')} emptyTitle={isSearching ? t('common.noMatches') : undefined} emptyDescription={isSearching ? t('common.tryDifferentSearch') : undefined} onAction={!isSearching ? () => setCreateDialogOpen(true) : undefined} actionLabel={!isSearching ? t('notebooks.newNotebook') : undefined} /> : <FolderCollections items={filteredActive} folders={folders.data ?? []} renderItems={entries => <NotebookList hideHeading notebooks={entries} isLoading={false} title={t('notebooks.activeNotebooks')} />} />}
+            {hasArchived && <section className="archived-collections">
+              <Button variant="ghost" aria-expanded={archiveOpen} aria-controls="archived-notebooks" onClick={() => setArchiveOpen(open => !open)}>{t('notebooks.archivedNotebooks')} ({filteredArchived?.length ?? 0})</Button>
+              {archiveOpen && <div id="archived-notebooks"><FolderCollections items={filteredArchived ?? []} folders={folders.data ?? []} renderItems={entries => <NotebookList hideHeading notebooks={entries} isLoading={false} title={t('notebooks.archivedNotebooks')} />} /></div>}
+            </section>}
+          </div>
         </div>
         </div>
       </div>

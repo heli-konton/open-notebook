@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — nova_notes
+
+### Added
+- Persistent flat notebook and generated-podcast folders, All/Unfiled views,
+  rename/delete and move/unassign controls; deletion preserves content/audio.
+- One authenticated dashboard podcast player with pause/resume, stop/reset,
+  rewind 15 seconds and seeking, retained across dashboard navigation.
+- Graphite/slate responsive shell with cyan accents, mobile navigation,
+  safe-area support, reduced-motion handling and folder/player translations in
+  all fourteen locales.
+
+### Changed
+- User-facing identity, login, title, book/nova logo and favicon to `nova_notes`;
+  upstream attribution, MIT license and internal API/environment names retained.
+- Migration 24 adds typed folders and nullable assignments, with atomic deletion
+  cleanup. Ordinary notebook/episode saves cannot overwrite folder membership.
+
 ## [1.14.0] - 2026-07-20
 
 ### Added

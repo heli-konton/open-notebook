@@ -1,0 +1,21 @@
+-- Flat collections; nullable assignments leave existing content Unfiled.
+DEFINE TABLE folder SCHEMAFULL;
+DEFINE FIELD name ON folder TYPE string ASSERT string::len(string::trim($value)) > 0 AND string::len($value) <= 100;
+DEFINE FIELD kind ON folder TYPE string ASSERT $value IN ["notebook", "podcast"];
+-- Keep per-folder conflict records even after deletion: deleting the conflict
+-- key itself does not reject a stale writer on SurrealDB 2's memory backend.
+DEFINE TABLE folder_assignment_guard SCHEMAFULL;
+DEFINE FIELD version ON folder_assignment_guard TYPE int DEFAULT 0;
+DEFINE EVENT folder_create_guard ON folder WHEN $before == NONE AND $after != NONE THEN {
+    CREATE type::thing("folder_assignment_guard", <string>$after.id) SET version = 0;
+};
+DEFINE FIELD folder_id ON notebook TYPE option<string>;
+DEFINE FIELD folder_id ON episode TYPE option<string>;
+
+-- Delete only the collection, never the content or generated audio.
+DEFINE EVENT folder_delete ON folder WHEN $after == NONE THEN {
+    UPDATE type::thing("folder_assignment_guard", <string>$before.id)
+        SET version = version + 1;
+    UPDATE notebook SET folder_id = NONE WHERE folder_id = <string>$before.id;
+    UPDATE episode SET folder_id = NONE WHERE folder_id = <string>$before.id;
+};

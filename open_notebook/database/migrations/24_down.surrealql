@@ -1,0 +1,12 @@
+-- Remove guard writers before their fields/tables so rollback cannot recreate
+-- guard tombstones or mutate content through folder events.
+REMOVE EVENT folder_delete ON folder;
+REMOVE EVENT folder_create_guard ON folder;
+-- REMOVE FIELD only removes schema; clear stored membership too, otherwise
+-- re-applying migration 24 exposes dangling IDs from the deleted folder table.
+UPDATE notebook UNSET folder_id WHERE folder_id != NONE;
+UPDATE episode UNSET folder_id WHERE folder_id != NONE;
+REMOVE FIELD folder_id ON notebook;
+REMOVE FIELD folder_id ON episode;
+REMOVE TABLE folder;
+REMOVE TABLE folder_assignment_guard;

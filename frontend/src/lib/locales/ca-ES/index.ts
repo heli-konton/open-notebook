@@ -1,6 +1,32 @@
 import type { TranslationShape } from '../en-US';
 
 export const caES = {
+  folders: {
+    "title": "Carpetes",
+    "all": "Tots",
+    "unfiled": "Sense carpeta",
+    "create": "Carpeta nova",
+    "name": "Nom de la carpeta",
+    "move": "Mou a una carpeta",
+    "saved": "Carpeta actualitzada",
+    "error": "No s’han pogut actualitzar les carpetes. Torna-ho a provar.",
+    "renameTitle": "Canvia el nom de la carpeta",
+    "deleteTitle": "Suprimeix la carpeta",
+    "description": "Organitza la biblioteca amb carpetes sense subcarpetes.",
+    "deleteDescription": "Els elements quedaran sense carpeta. No se suprimiran quaderns, fonts ni àudio."
+  },
+  player: {
+    "expand": "Amplia el reproductor",
+    "minimize": "Torna a la biblioteca",
+    "title": "En reproducció",
+    "play": "Reprodueix",
+    "pause": "Pausa",
+    "stop": "Atura i reinicia",
+    "rewind": "Retrocedeix 15 segons",
+    "seek": "Posició de reproducció",
+    "close": "Tanca el reproductor"
+  },
+
   common: {
     search: "Cerca...",
     create: "Nou",
@@ -38,7 +64,7 @@ export const caES = {
     podcast: "Podcast",
     quickActions: "Accions ràpides",
     quickActionsDesc: "Navegació, cerca, preguntes, tema",
-    appName: "Open Notebook",
+    appName: "nova_notes",
     add: "Afegeix",
     remove: "Elimina",
     confirm: "Confirma",
@@ -177,7 +203,7 @@ export const caES = {
   },
   connectionErrors: {
     apiTitle: "No es pot connectar al servidor de l'API",
-    apiDesc: "No s'ha pogut establir connexió amb el servidor de l'API d'Open Notebook",
+    apiDesc: "No s'ha pogut establir connexió amb el servidor de l'API d'nova_notes",
     dbTitle: "Ha fallat la connexió amb la base de dades",
     dbDesc: "El servidor de l'API s'està executant, però no es pot accedir a la base de dades",
     troubleshooting: "Això normalment significa:",
@@ -191,7 +217,7 @@ export const caES = {
     setApiUrl: "Estableix la variable d'entorn API_URL:",
     checkSurreal: "Comprova si SurrealDB s'està executant:",
     seeDocumentation: "Per obtenir instruccions detallades de configuració, consulta:",
-    docLink: "Documentació d'Open Notebook",
+    docLink: "Documentació d'nova_notes",
     showTechnical: "Mostra els detalls tècnics",
     attemptedUrl: "URL intentada",
     message: "Missatge",
@@ -203,7 +229,7 @@ export const caES = {
     localDevLabel: "Per al desenvolupament local",
   },
   auth: {
-    loginTitle: "Open Notebook",
+    loginTitle: "nova_notes",
     loginDesc: "Introdueix la teva contrasenya per accedir a l'aplicació",
     passwordPlaceholder: "Contrasenya",
     signingIn: "S'està iniciant la sessió...",
@@ -781,7 +807,7 @@ export const caES = {
     visionEnabled: "Descriu imatges i gràfics",
     visionHelp: "Utilitza un model de visió per descriure imatges i extreure dades de gràfics quan s'utilitza el motor Docling. Considerablement més lent i pot cridar un model de visió.",
     autoDeletePlaceholder: "Selecciona l'opció de supressió automàtica",
-    filesHelp: "Un cop els fitxers s'han carregat i processat, ja no calen. La majoria d'usuaris haurien de permetre que Open Notebook suprimeixi automàticament els fitxers carregats de la carpeta de càrrega.",
+    filesHelp: "Un cop els fitxers s'han carregat i processat, ja no calen. La majoria d'usuaris haurien de permetre que nova_notes suprimeixi automàticament els fitxers carregats de la carpeta de càrrega.",
     loadFailed: "Ha fallat la càrrega de la configuració",
   },
   advanced: {
@@ -794,7 +820,7 @@ export const caES = {
     latestVersion: "Darrera versió",
     status: "Estat",
     updateAvailable: "La versió {{version}} és disponible",
-    updateAvailableDesc: "Hi ha una nova versió d'Open Notebook disponible.",
+    updateAvailableDesc: "Hi ha una nova versió d'nova_notes disponible.",
     upToDate: "Actualitzat",
     unknown: "Desconegut",
     viewOnGithub: "Visualitza a GitHub",
@@ -876,8 +902,8 @@ export const caES = {
     modelTypeHint: "Selecciona el tipus per als models que vols afegir. Si necessites tipus diferents, afegeix-los en lots separats.",
     deleteModel: "Suprimeix el model",
     defaultAssignments: "Assignacions de model per defecte",
-    defaultAssignmentsDesc: "Configura quins models s'usaran per a diferents propòsits a Open Notebook",
-    missingRequiredModels: "Falten models obligatoris: {{models}}. Open Notebook pot no funcionar correctament sense aquests.",
+    defaultAssignmentsDesc: "Configura quins models s'usaran per a diferents propòsits a nova_notes",
+    missingRequiredModels: "Falten models obligatoris: {{models}}. nova_notes pot no funcionar correctament sense aquests.",
     selectModelPlaceholder: "Selecciona un model",
     noneOption: "Cap",
     noneFallbackToChat: "Utilitza l'alternativa (xat per defecte)",
@@ -924,7 +950,7 @@ export const caES = {
   },
   apiKeys: {
     title: "Configura la teva IA amb les teves pròpies claus de l'API",
-    description: "Emmagatzema les claus de l'API de manera segura a la base de dades per habilitar els proveïdors d'IA a Open Notebook.",
+    description: "Emmagatzema les claus de l'API de manera segura a la base de dades per habilitar els proveïdors d'IA a nova_notes.",
     encryptionRequired: "Clau de xifratge no configurada",
     encryptionRequiredDescription: "Estableix la variable d'entorn OPEN_NOTEBOOK_ENCRYPTION_KEY a qualsevol cadena secreta per habilitar l'emmagatzematge de claus de l'API a la base de dades.",
     configured: "Configurat",

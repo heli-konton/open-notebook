@@ -5,6 +5,17 @@ import { EpisodeCard } from './EpisodeCard'
 import type { PodcastEpisode } from '@/lib/types/podcasts'
 
 // useTranslation is mocked globally in setup.ts (t returns the key string)
+const selectEpisode = vi.fn()
+vi.mock('./PodcastPlayer', () => ({ usePodcastPlayer: () => ({ select: selectEpisode, playing: false, episode: null, clear: vi.fn() }) }))
+vi.mock('@/lib/hooks/use-folders', () => ({ useFolders: () => ({ data: [] }), useFolderMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) }))
+
+it('opens the persistent player without mounting competing card audio nodes', () => {
+  const episode = makeEpisode({ audio_url: '/api/podcasts/episodes/episode:1/audio' })
+  const view = render(<EpisodeCard episode={episode} onDelete={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', { name: 'player.play' }))
+  expect(selectEpisode).toHaveBeenCalledWith(episode)
+  expect(view.container.querySelector('audio')).toBeNull()
+})
 
 vi.mock('@/lib/api/client', () => ({
   default: { get: vi.fn() },
@@ -134,4 +145,14 @@ describe('EpisodeCard model details', () => {
 
     expect(screen.getAllByText('— / —')).toHaveLength(3)
   })
+})
+
+it('keeps mobile feed playback first while exposing episode management on demand', () => {
+  vi.mocked(window.matchMedia).mockImplementationOnce(query => ({matches:true,media:query,onchange:null,addListener:vi.fn(),removeListener:vi.fn(),addEventListener:vi.fn(),removeEventListener:vi.fn(),dispatchEvent:vi.fn()}))
+  render(<EpisodeCard episode={makeEpisode({audio_url:'/api/podcasts/episodes/episode:1/audio'})} onDelete={vi.fn()} />)
+  expect(screen.getByRole('button',{name:'player.play'})).toBeInTheDocument()
+  expect(screen.queryByRole('button',{name:'podcasts.delete'})).toBeNull()
+  fireEvent.click(screen.getByRole('button',{name:'common.actions'}))
+  expect(screen.getByRole('button',{name:'podcasts.delete'})).toBeInTheDocument()
+  expect(screen.getByRole('button',{name:'podcasts.details'})).toBeInTheDocument()
 })
