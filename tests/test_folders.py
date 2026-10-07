@@ -9,7 +9,7 @@ import pytest
 import pytest_asyncio
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from httpx import ASGITransport, AsyncClient
+from httpx import ASGITransport, AsyncClient, Response
 from surrealdb import AsyncSurreal
 
 from open_notebook.exceptions import InvalidInputError, NotFoundError
@@ -586,6 +586,7 @@ async def test_assignment_and_delete_share_a_conflict_target(
     ), "A committed assignment must never reference a deleted folder"
     if first_commit == "delete":
         assert not folders
+        assert isinstance(outcome, Response)
         assert outcome.status_code == 404
         assert row.get("folder_id") is None
     else:
@@ -596,6 +597,7 @@ async def test_assignment_and_delete_share_a_conflict_target(
             monkeypatch.setattr(folders_service, "repo_query", original)
             assert (await delete()).status_code == 204
         else:
+            assert isinstance(outcome, Response)
             assert outcome.status_code == 204
         assert await db.query("SELECT * FROM folder;") == []
         assert (await db.query(f"SELECT * FROM {table}:race;"))[0].get(
