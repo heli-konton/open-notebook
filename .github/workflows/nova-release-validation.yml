@@ -1,0 +1,206 @@
+# Automation branch only. Every application checkout is frozen; no live actions.
+name: Nova release validation (frozen merged source)
+'on':
+  push:
+    branches:
+    - helios/nova-release-validation
+permissions:
+  contents: read
+concurrency:
+  group: nova-release-validation
+  cancel-in-progress: false
+env:
+  APP_SHA: de3ea4ac9b2c9f8fcf5d5666299b8354b42bfc32
+  IMAGE: ghcr.io/heli-konton/open-notebook:nova-candidate-de3ea4ac9b2c
+defaults:
+  run:
+    shell: bash
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+    - &id001
+      name: Checkout frozen application
+      uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      with:
+        ref: de3ea4ac9b2c9f8fcf5d5666299b8354b42bfc32
+        persist-credentials: false
+    - &id002
+      name: Verify source receipt
+      run: 'mkdir -p evidence
+
+        test "$(git rev-parse HEAD)" = "$APP_SHA"
+
+        printf "app_sha=%s\nautomation_sha=%s\n" "$(git rev-parse HEAD)" "$GITHUB_SHA" | tee evidence/source.txt
+
+        git status --short | tee evidence/checkout-status.txt'
+    - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+      with:
+        enable-cache: false
+    - name: Python 3.12
+      run: uv python install 3.12
+    - name: Locked backend dependencies
+      run: uv sync --locked --python 3.12 2>&1 | tee evidence/uv-sync.log
+      id: deps
+    - name: Install pinned real SurrealDB 2 server
+      run: 'curl -fL --retry 3 https://github.com/surrealdb/surrealdb/releases/download/v2.3.10/surreal-v2.3.10.linux-amd64.tgz -o "$RUNNER_TEMP/surreal.tgz"
+
+        printf ''%s  %s
+
+        '' cb3ccfa9906684de8cad4e47326056617a36f4b049231d4aac53daadfce41dc2 "$RUNNER_TEMP/surreal.tgz" | sha256sum -c -
+
+        mkdir "$RUNNER_TEMP/surreal-bin"
+
+        tar xzf "$RUNNER_TEMP/surreal.tgz" -C "$RUNNER_TEMP/surreal-bin"
+
+        "$RUNNER_TEMP/surreal-bin/surreal" version | tee evidence/surreal-version.txt
+
+        printf ''NOVA_TEST_SURREAL_BINARY=%s/surreal-bin/surreal
+
+        '' "$RUNNER_TEMP" >> "$GITHUB_ENV"'
+      id: surreal
+    - name: Full backend pytest and coverage
+      run: uv run --no-sync pytest tests/ -v -ra --cov=open_notebook --cov=api --cov-report=term-missing --cov-report=xml:evidence/coverage.xml --junitxml=evidence/backend.xml 2>&1 | tee evidence/pytest.log
+      if: '!cancelled() && steps.deps.outcome == ''success'' && steps.surreal.outcome == ''success'''
+    - name: Real database folder suite no silent skips
+      run: 'uv run --no-sync pytest tests/test_folders.py -v -ra --junitxml=evidence/folders.xml 2>&1 | tee evidence/folders.log
+
+        python -c ''import xml.etree.ElementTree as E; r=E.parse("evidence/folders.xml"); s=r.findall(".//testsuite"); assert sum(int(x.get("tests",0)) for x in s)==21; assert sum(int(x.get("skipped",0)) for x in s)==0'''
+      if: '!cancelled() && steps.deps.outcome == ''success'' && steps.surreal.outcome == ''success'''
+    - name: Full Ruff
+      run: uv run --no-sync ruff check . 2>&1 | tee evidence/ruff.log
+      if: '!cancelled() && steps.deps.outcome == ''success'''
+    - name: Full mypy
+      run: uv run --no-sync python -m mypy . 2>&1 | tee evidence/mypy.log
+      if: '!cancelled() && steps.deps.outcome == ''success'''
+    - name: Preserve evidence
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: backend-evidence
+        path: evidence/
+        retention-days: 30
+        if-no-files-found: warn
+  frontend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+    - *id001
+    - *id002
+    - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+      with:
+        node-version: 22
+    - name: Locked frontend dependencies
+      run: npm ci --prefix frontend 2>&1 | tee evidence/npm-ci.log
+      id: deps
+    - name: All frontend tests with coverage
+      run: 'cd frontend
+
+        npm run test:coverage -- --reporter=default --reporter=junit --outputFile.junit=../evidence/frontend.xml 2>&1 | tee ../evidence/vitest.log'
+      if: '!cancelled() && steps.deps.outcome == ''success'''
+    - name: Full ESLint
+      run: 'cd frontend
+
+        npm run lint 2>&1 | tee ../evidence/eslint.log'
+      if: '!cancelled() && steps.deps.outcome == ''success'''
+    - name: TypeScript
+      run: 'cd frontend
+
+        npx --no-install tsc --noEmit 2>&1 | tee ../evidence/typescript.log'
+      if: '!cancelled() && steps.deps.outcome == ''success'''
+    - name: Normal standalone production build
+      run: 'cd frontend
+
+        test -z "${NOVA_NOTES_BOUNDED_BUILD:-}"
+
+        npm run build 2>&1 | tee ../evidence/next-build.log
+
+        test -f .next/standalone/server.js'
+      if: '!cancelled() && steps.deps.outcome == ''success'''
+    - name: Preserve evidence
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: frontend-evidence
+        path: 'evidence/
+
+          frontend/coverage/'
+        retention-days: 30
+        if-no-files-found: warn
+  candidate-image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - *id001
+    - *id002
+    - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
+    - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Refuse to overwrite an existing candidate
+      run: "if docker buildx imagetools inspect \"$IMAGE\" > evidence/existing-image.txt 2>&1; then\n  printf \"Candidate tag already exists; refusing to overwrite\\n\"; exit 1\nfi"
+    - name: Standard Dockerfile runtime build and fork-only publication
+      id: publish
+      uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
+      with:
+        context: .
+        file: ./Dockerfile
+        target: runtime
+        platforms: linux/amd64
+        push: true
+        tags: ghcr.io/heli-konton/open-notebook:nova-candidate-de3ea4ac9b2c
+        labels: 'org.opencontainers.image.revision=de3ea4ac9b2c9f8fcf5d5666299b8354b42bfc32
+
+          org.opencontainers.image.source=https://github.com/heli-konton/open-notebook
+
+          io.nova.release.status=NOT_READY_REQUIRES_VALIDATION_AND_REHEARSAL'
+    - name: Read back immutable candidate metadata
+      run: 'REF="ghcr.io/heli-konton/open-notebook@${{ steps.publish.outputs.digest }}"
+
+        printf ''%s
+
+        '' "$REF" | tee evidence/image-reference.txt
+
+        docker buildx imagetools inspect "$REF" | tee evidence/image-inspect.txt
+
+        docker buildx imagetools inspect "$REF" --raw > evidence/image-manifest.json
+
+        docker buildx imagetools inspect "$REF" --format ''{{json .Image}}'' > evidence/image-config.json
+
+        cat evidence/image-config.json
+
+        python -c ''import json; c=json.load(open("evidence/image-config.json")); assert c["os"]=="linux" and c["architecture"]=="amd64"; assert c["config"]["Labels"]["org.opencontainers.image.revision"]=="de3ea4ac9b2c9f8fcf5d5666299b8354b42bfc32"''
+
+        printf ''Candidate only; not authorized for deployment.
+
+        '' >> "$GITHUB_STEP_SUMMARY"'
+    - name: Preserve evidence
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: candidate-image-evidence
+        path: evidence/
+        retention-days: 30
+        if-no-files-found: warn
+  release-gate:
+    runs-on: ubuntu-24.04
+    needs:
+    - backend
+    - frontend
+    - candidate-image
+    if: always()
+    steps:
+    - name: Explicit release gate
+      env:
+        BACKEND: ${{ needs.backend.result }}
+        FRONTEND: ${{ needs.frontend.result }}
+        IMAGE_RESULT: ${{ needs.candidate-image.result }}
+      run: 'printf "Backend: %s\nFrontend: %s\nCandidate image: %s\nNo deployment or rehearsal performed.\n" "$BACKEND" "$FRONTEND" "$IMAGE_RESULT" | tee -a "$GITHUB_STEP_SUMMARY"
+
+        test "$BACKEND" = success && test "$FRONTEND" = success && test "$IMAGE_RESULT" = success'
