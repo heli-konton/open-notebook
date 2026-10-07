@@ -22,7 +22,28 @@ rechecks folder availability inside a database transaction. Folder deletion
 fires an event that clears assignments in the same transaction, never deleting
 content. `FolderItem` excludes membership from ordinary content saves, so stale
 notebook edits or worker saves cannot restore deleted/moved assignments.
-Down migration removes the event, assignment fields and folder table only.
+Assignments and deletes increment the same per-folder
+`folder_assignment_guard.version` within their transactions. Creation initializes
+the guard through `folder_create_guard`; deletion retains it as a tombstone.
+Neither racing commit order can leave a committed dangling assignment: a stale
+writer conflicts, or a fresh delete sees and clears the committed membership.
+Assignment uses UPDATE, not UPSERT, and never retries a failed write; deleted
+items/folders are not recreated. Other conflicts propagate for fresh-state retry.
+
+Down migration removes both folder events first, clears stored memberships while
+their fields are still defined, then removes the assignment fields, folder table
+and guard table. Removing field definitions alone does not remove stored values;
+without UNSET, reapplying 24 would expose old IDs for nonexistent folders.
+Only assigned rows are updated; their automatic `updated` timestamps advance.
+Content, archive state, audio paths and creation timestamps are preserved, and
+already-Unfiled rows are not updated. Stop folder writes during rollback.
+
+This edits unreleased migration 24 in place, assuming the deployment baseline is
+23 and no deployed database has applied 24. That is a release assumption, not a
+production observation: before deployment, verify the target `_sbl_migrations`
+ledger and schema. If 24 is already applied anywhere, stop and reconcile the
+applied definition instead of assuming an edited migration will rerun. No
+gratuitous migration 25 is introduced for this never-deployed branch.
 
 All and Unfiled are computed views, not records. Counts are based on actual
 loaded items; notebook search/archive filters compose with folder selection.
@@ -51,7 +72,22 @@ Backend vertical slices exercise a real database with bounded dependencies:
 `pytest tests/test_folders.py -q` (embedded DB), or set
 `NOVA_TEST_SURREAL_URL=ws://127.0.0.1:18000/rpc` against an isolated SurrealDB 2.7
 server. Tests cover CRUD, safe deletion, reassign/unassign, archive preservation,
-invalid/missing/wrong-kind assignments and stale-save protection. Frontend
+invalid/missing/wrong-kind assignments and stale-save protection. Set
+`NOVA_TEST_SURREAL_BINARY=/path/to/surreal` to also start isolated, loopback-only
+SurrealDB 2 servers for deterministic HTTP-barrier races. Both notebook and
+podcast races force assignment-first and deletion-first commit order. Migration
+round-trip tests apply the real registered migrations 1–23, then exercise
+24 up → create/assign/delete → down → up. They compare the full restored schema,
+verify the 23/24 ledger transitions, retained content, cleared memberships,
+removed guard tombstones, and freshly working events after reapplication.
+
+Bounded verification on SurrealDB 2.7.0: all 21 folder cases passed (the original
+19 plus embedded/server round-trip cases). A second run routed ordinary API cases
+to an isolated real server and included repository configuration, proxy and
+migration-22 regressions: 48 passed. The complete `pytest tests` suite remains
+blocked at collection in the bounded environment by missing AI/worker packages
+(including `surreal_commands`, `esperanto`, `langchain_text_splitters`,
+`langchain_core`, and `content_core`); it is not claimed as passing. Frontend
 Vitest covers grouping, move controls, mobile navigation and playback controls;
 media decoding is not available in jsdom and is not claimed by these tests.
 

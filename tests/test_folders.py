@@ -182,6 +182,127 @@ async def concurrency_client(request, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_migration_24_round_trip_restores_schema_and_preserves_content(
+    concurrency_client, monkeypatch
+):
+    """Exercise the registered migrations on a fresh, fully migrated database."""
+    from uuid import uuid4
+
+    from open_notebook.database import async_migrate, repository
+    from open_notebook.database.async_migrate import (
+        AsyncMigrationManager,
+        AsyncMigrationRunner,
+    )
+
+    # async_migrate imports this function by value; refresh for each fixture.
+    monkeypatch.setattr(async_migrate, "db_connection", repository.db_connection)
+    http, db = concurrency_client
+    # Reuse only the isolated connection/server, not the abbreviated API schema.
+    await db.use("test", "migration_24_" + uuid4().hex)
+    manager = AsyncMigrationManager()
+    baseline = AsyncMigrationRunner(
+        manager.up_migrations[:23], manager.down_migrations[:23]
+    )
+    await baseline.run_all()
+    assert await manager.get_current_version() == 23
+    await db.query(
+        "CREATE notebook:kept SET name = 'Research', archived = true, "
+        "description = 'Keep this'; "
+        "CREATE episode:kept SET name = 'Audio', episode_profile = {}, "
+        "speaker_profile = {}, content = 'Transcript', audio_file = 'kept.mp3';"
+    )
+
+    async def schema():
+        database = await db.query("INFO FOR DB;")
+        tables = {
+            name: await db.query(f"INFO FOR TABLE {name};")
+            for name in database["tables"]
+        }
+        return database, tables
+
+    before_schema = await schema()
+    await manager.runner.run_one_up()
+    assert await manager.get_current_version() == 24
+    folders = {}
+    for kind, table in [("notebook", "notebook"), ("podcast", "episode")]:
+        response = await http.post("/api/folders", json={"name": kind, "kind": kind})
+        assert response.status_code == 201
+        folders[kind] = response.json()["id"]
+        response = await http.put(
+            f"/api/folders/assignment/{kind}/{table}:kept",
+            json={"folder_id": folders[kind]},
+        )
+        assert response.status_code == 200
+    assert (await http.delete("/api/folders/" + folders["podcast"])).status_code == 204
+    await db.query(
+        "CREATE episode:assigned SET name = 'Assigned audio', episode_profile = {}, "
+        "speaker_profile = {}, content = 'Keep transcript', audio_file = 'assigned.mp3';"
+    )
+    remaining = await http.post(
+        "/api/folders", json={"name": "Remaining audio", "kind": "podcast"}
+    )
+    assert remaining.status_code == 201
+    assert (
+        await http.put(
+            "/api/folders/assignment/podcast/episode:assigned",
+            json={"folder_id": remaining.json()["id"]},
+        )
+    ).status_code == 200
+    assert len(await db.query("SELECT * FROM folder_assignment_guard;")) == 3
+    # Unfiling advances the schema's automatic updated timestamp, not content.
+    before_content = {
+        table: await db.query(f"SELECT * OMIT folder_id, updated FROM {table} ORDER BY id;")
+        for table in ("notebook", "episode")
+    }
+    unfiled_episode = await db.query("SELECT * FROM episode:kept;")
+
+    await manager.runner.run_one_down()
+    assert await manager.get_current_version() == 23
+    after_database, after_tables = await schema()
+    assert "folder_assignment_guard" not in after_database["tables"]
+    assert "folder" not in after_database["tables"]
+    assert (after_database, after_tables) == before_schema
+    for table, rows in before_content.items():
+        assert await db.query(
+            f"SELECT * OMIT folder_id, updated FROM {table} ORDER BY id;"
+        ) == rows
+        assert all(
+            row.get("folder_id") is None
+            for row in await db.query(f"SELECT * FROM {table};")
+        )
+    assert await db.query("SELECT * FROM episode:kept;") == unfiled_episode
+
+    await manager.runner.run_one_up()
+    assert await manager.get_current_version() == 24
+    assert await db.query("SELECT * FROM folder_assignment_guard;") == []
+    assert await db.query("SELECT * FROM folder;") == []
+    events = (await db.query("INFO FOR TABLE folder;"))["events"]
+    assert set(events) == {"folder_create_guard", "folder_delete"}
+    for table, rows in before_content.items():
+        assert await db.query(
+            f"SELECT * OMIT folder_id, updated FROM {table} ORDER BY id;"
+        ) == rows
+        assert all(
+            row.get("folder_id") is None
+            for row in await db.query(f"SELECT * FROM {table};")
+        )
+    # The re-applied event must create a fresh guard even for an old folder ID.
+    from api.folders_service import record_id
+
+    old_id = record_id(folders["podcast"], "folder")
+    await db.query(
+        "CREATE $id SET name = 'Recreated', kind = 'podcast';", {"id": old_id}
+    )
+    guards = await db.query("SELECT * FROM folder_assignment_guard;")
+    assert len(guards) == 1
+    assert guards[0]["version"] == 0
+    assert (await http.delete("/api/folders/" + folders["podcast"])).status_code == 204
+    guards = await db.query("SELECT * FROM folder_assignment_guard;")
+    assert len(guards) == 1
+    assert guards[0]["version"] == 1
+
+
+@pytest.mark.asyncio
 async def test_create_and_list_folder(client):
     http, _ = client
     response = await http.post(
