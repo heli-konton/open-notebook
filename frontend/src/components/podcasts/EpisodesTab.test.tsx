@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { it, expect, vi } from 'vitest'
 import { EpisodesTab } from './EpisodesTab'
 const episodes = [{id:'episode:1',name:'Filed episode',folder_id:'folder:1',job_status:'completed'},{id:'episode:2',name:'Unfiled episode',job_status:'completed'}]
@@ -9,10 +9,24 @@ vi.mock('./GeneratePodcastDialog', () => ({GeneratePodcastDialog:()=>null}))
 it('filters podcast status groups to the selected folder', () => {
   render(<EpisodesTab />)
   expect(screen.getByText('Filed episode')).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button',{name:'folders.unfiled 1'}))
+  fireEvent.click(within(screen.getByRole('complementary', {name:'folders.title'})).getByRole('button',{name:'folders.unfiled 1'}))
   expect(screen.queryByText('Filed episode')).toBeNull()
   expect(screen.getByText('Unfiled episode')).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button',{name:'Research 1'}))
+  fireEvent.click(within(screen.getByRole('complementary', {name:'folders.title'})).getByRole('button',{name:'Research 1'}))
   expect(screen.getByText('Filed episode')).toBeInTheDocument()
   expect(screen.queryByText('Unfiled episode')).toBeNull()
+})
+
+it('uses folder collections for the playback feed and keeps pending workflows secondary', () => {
+  episodes.push({id:'episode:3',name:'Queued episode',job_status:'pending'})
+  render(<EpisodesTab />)
+  const collection = within(screen.getByRole('region', {name:'podcasts.statusCompletedTitle'})).getByRole('button', {name:'Research 1'})
+  expect(collection).toHaveAttribute('aria-expanded','true')
+  fireEvent.click(collection)
+  expect(screen.queryByText('Filed episode')).toBeNull()
+  expect(screen.getByText('Unfiled episode')).toBeInTheDocument()
+  expect(screen.queryByText('Queued episode')).toBeNull()
+  fireEvent.click(screen.getByText('common.actions'))
+  expect(screen.getByText('Queued episode')).toBeInTheDocument()
+  episodes.pop()
 })

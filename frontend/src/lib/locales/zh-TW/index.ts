@@ -16,6 +16,8 @@ export const zhTW = {
     "deleteDescription": "項目將變為未分類。筆記本、來源和音訊不會被刪除。"
   },
   player: {
+    "expand": "展開播放器",
+    "minimize": "返回媒體庫",
     "title": "正在播放",
     "play": "播放",
     "pause": "暫停",

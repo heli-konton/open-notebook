@@ -16,6 +16,8 @@ export const esES = {
     "deleteDescription": "Los elementos quedarán sin carpeta. No se eliminarán cuadernos, fuentes ni audio."
   },
   player: {
+    "expand": "Ampliar reproductor",
+    "minimize": "Volver a la biblioteca",
     "title": "Reproduciendo",
     "play": "Reproducir",
     "pause": "Pausar",

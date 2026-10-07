@@ -16,6 +16,8 @@ export const frFR = {
     "deleteDescription": "Les éléments seront sans dossier. Aucun carnet, source ou audio ne sera supprimé."
   },
   player: {
+    "expand": "Agrandir le lecteur",
+    "minimize": "Retour à la bibliothèque",
     "title": "En cours de lecture",
     "play": "Lire",
     "pause": "Pause",

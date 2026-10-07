@@ -16,6 +16,8 @@ export const plPL = {
     "deleteDescription": "Elementy pozostaną bez folderu. Notatniki, źródła i dźwięk nie zostaną usunięte."
   },
   player: {
+    "expand": "Rozwiń odtwarzacz",
+    "minimize": "Wróć do biblioteki",
     "title": "Teraz odtwarzane",
     "play": "Odtwórz",
     "pause": "Wstrzymaj",

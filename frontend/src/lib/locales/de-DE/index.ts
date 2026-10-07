@@ -19,6 +19,8 @@ export const deDE = {
     "deleteDescription": "Inhalte werden nicht zugeordnet. Notebooks, Quellen und Audio bleiben erhalten."
   },
   player: {
+    "expand": "Player erweitern",
+    "minimize": "Zur Bibliothek",
     "title": "Aktuelle Wiedergabe",
     "play": "Abspielen",
     "pause": "Pause",

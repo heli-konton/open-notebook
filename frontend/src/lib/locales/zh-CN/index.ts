@@ -16,6 +16,8 @@ export const zhCN = {
     "deleteDescription": "项目将变为未分类。笔记本、来源和音频不会被删除。"
   },
   player: {
+    "expand": "展开播放器",
+    "minimize": "返回媒体库",
     "title": "正在播放",
     "play": "播放",
     "pause": "暂停",

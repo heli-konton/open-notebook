@@ -16,6 +16,8 @@ export const itIT = {
     "deleteDescription": "Gli elementi rimarranno senza cartella. Taccuini, fonti e audio non saranno eliminati."
   },
   player: {
+    "expand": "Espandi il lettore",
+    "minimize": "Torna alla raccolta",
     "title": "In riproduzione",
     "play": "Riproduci",
     "pause": "Pausa",

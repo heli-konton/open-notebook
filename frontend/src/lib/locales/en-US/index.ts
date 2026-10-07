@@ -14,6 +14,8 @@ export const enUS = {
     "deleteDescription": "Items will become Unfiled. No notebooks, sources or audio will be deleted."
   },
   player: {
+    "expand": "Expand player",
+    "minimize": "Back to library",
     "title": "Now playing",
     "play": "Play",
     "pause": "Pause",

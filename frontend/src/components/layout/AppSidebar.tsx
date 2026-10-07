@@ -76,7 +76,7 @@ const getNavigation = (t: TFunction) => [
 
 type CreateTarget = 'source' | 'notebook' | 'podcast'
 
-export function AppSidebar() {
+export function AppSidebar({ children }: { children?: React.ReactNode }) {
   const { t } = useTranslation()
   const navigation = getNavigation(t)
   const pathname = usePathname()
@@ -288,6 +288,7 @@ export function AppSidebar() {
                   )
                 })}
               </div>
+              {index === 1 && !isCollapsed && children}
             </div>
           ))}
         </nav>

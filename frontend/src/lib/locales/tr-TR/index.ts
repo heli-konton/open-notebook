@@ -16,6 +16,8 @@ export const trTR = {
     "deleteDescription": "Öğeler klasörsüz kalacak. Defterler, kaynaklar ve ses silinmeyecek."
   },
   player: {
+    "expand": "Oynatıcıyı genişlet",
+    "minimize": "Kitaplığa dön",
     "title": "Şimdi çalıyor",
     "play": "Oynat",
     "pause": "Duraklat",

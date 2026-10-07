@@ -7,6 +7,8 @@ import { resolvePodcastAssetUrl } from '@/lib/api/podcasts'
 import type { PodcastEpisode } from '@/lib/types/podcasts'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog'
+import { EpisodeArtwork } from './EpisodeArtwork'
 
 type Player = { episode: PodcastEpisode | null; playing: boolean; select: (episode: PodcastEpisode) => Promise<void>; clear: (id?: string) => void }
 const PlayerContext = createContext<Player>({ episode: null, playing: false, select: async () => {}, clear: () => {} })
@@ -35,6 +37,7 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
   const [error, setError] = useState(false)
   const [position, setPosition] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [expanded, setExpanded] = useState(false)
 
   const release = () => {
     serial.current++
@@ -49,13 +52,25 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
   useEffect(() => () => { release() }, [])
 
   const resume = async () => {
-    try { await audio.current?.play(); setError(false) }
-    catch { setError(true); setPlaying(false) }
+    const token = serial.current
+    const id = current.current?.id
+    const node = audio.current
+    if (!node || !id) return
+    try {
+      await node.play()
+      if (serial.current === token && current.current?.id === id) setError(false)
+    } catch {
+      if (serial.current === token && current.current?.id === id) {
+        setError(true)
+        setPlaying(false)
+      }
+    }
   }
   const clear = (id?: string) => {
     if (id && current.current?.id !== id) return
     release()
     current.current = null
+    setExpanded(false)
     setEpisode(null); setPlaying(false); setLoading(false); setError(false)
     setPosition(0); setDuration(0)
   }
@@ -96,15 +111,45 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
   }
   const stop = () => { audio.current?.pause(); seek(0); setPlaying(false) }
 
+  const togglePlayback = () => {
+    if (playing) audio.current?.pause()
+    else if (objectUrl.current) void resume()
+    else if (episode) void select(episode)
+  }
+  const timeline = () => <div className="player-timeline">
+    <input type="range" aria-label={t('player.seek')} aria-valuetext={`${clock(position)} / ${clock(duration)}`} min={0} max={duration || 0} step={1} value={Math.min(position, duration)} disabled={loading || !duration} onChange={e => seek(Number(e.target.value))} />
+    <span className="font-mono text-xs text-muted-foreground">{clock(position)} / {clock(duration)}</span>
+  </div>
+  const controls = () => <div className="player-controls">
+    <Button variant="ghost" disabled={loading || !duration} aria-label={t('player.rewind')} onClick={() => seek((audio.current?.currentTime ?? 0) - 15)}><RotateCcw aria-hidden className="h-5 w-5" /><span>15</span></Button>
+    <Button className="player-primary" disabled={loading} aria-label={t(playing ? 'player.pause' : 'player.play')} onClick={togglePlayback}>{playing ? <Pause aria-hidden className="h-6 w-6" /> : <Play aria-hidden className="h-6 w-6" />}</Button>
+    <Button className="player-stop" variant="ghost" disabled={loading} aria-label={t('player.stop')} onClick={stop}><Square aria-hidden className="h-5 w-5" /></Button>
+  </div>
+  const feedback = () => <>{loading && <p role="status">{t('common.loading')}</p>}{error && <p role="alert" className="text-destructive">{t('podcasts.audioUnavailable')}</p>}</>
+  const source = episode?.episode_profile?.name || t('common.unknown')
+
   return <PlayerContext.Provider value={{ episode, playing, select, clear }}>
     {children}
     <audio ref={audio} preload="metadata" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onError={() => { setError(true); setPlaying(false) }} onTimeUpdate={() => setPosition(audio.current?.currentTime ?? 0)} onLoadedMetadata={() => { const seconds = audio.current?.duration ?? 0; setDuration(Number.isFinite(seconds) ? seconds : 0) }} />
-    {episode && <section className="podcast-player" aria-label={t('player.title')}>
-      <div className="player-heading"><div className="min-w-0"><p className="text-xs uppercase tracking-widest text-primary">{t('player.title')}</p><h2 className="font-semibold truncate">{episode.name}</h2></div><Button variant="ghost" aria-label={t('player.close')} onClick={() => clear()}><X aria-hidden className="h-5 w-5" /></Button></div>
-      {loading && <p role="status">{t('common.loading')}</p>}
-      {error && <p role="alert" className="text-destructive">{t('podcasts.audioUnavailable')}</p>}
-      <div className="player-timeline"><input type="range" aria-label={t('player.seek')} aria-valuetext={`${clock(position)} / ${clock(duration)}`} min={0} max={duration || 0} step={1} value={Math.min(position, duration)} disabled={loading || !duration} onChange={e => seek(Number(e.target.value))} /><span className="font-mono text-xs text-muted-foreground">{clock(position)} / {clock(duration)}</span></div>
-      <div className="player-controls"><Button variant="outline" disabled={loading || !duration} aria-label={t('player.rewind')} onClick={() => seek((audio.current?.currentTime ?? 0) - 15)}><RotateCcw aria-hidden className="h-5 w-5" /><span>15</span></Button><Button className="player-primary" disabled={loading} aria-label={t(playing ? 'player.pause' : 'player.play')} onClick={() => { if (playing) audio.current?.pause(); else if (objectUrl.current) void resume(); else void select(episode) }}>{playing ? <Pause aria-hidden className="h-6 w-6" /> : <Play aria-hidden className="h-6 w-6" />}</Button><Button variant="outline" disabled={loading} aria-label={t('player.stop')} onClick={stop}><Square aria-hidden className="h-5 w-5" /></Button></div>
-    </section>}
+    {episode && <Dialog open={expanded} onOpenChange={setExpanded}>
+      <section className="podcast-player" aria-label={t('player.title')}>
+        <DialogTrigger asChild><button className="player-track" aria-label={t('player.expand')}>
+          <EpisodeArtwork /><span className="min-w-0"><span className="player-track-title">{episode.name}</span><span className="player-source">{t('podcasts.profile')}: {source}</span></span>
+        </button></DialogTrigger>
+        <div className="player-transport">{controls()}{timeline()}</div>
+        <Button className="player-clear" variant="ghost" aria-label={t('player.close')} onClick={() => clear()}><X aria-hidden className="h-5 w-5" /></Button>
+        <div className="player-feedback">{feedback()}</div>
+      </section>
+      <DialogContent className="now-playing-sheet" onCloseAutoFocus={event => {
+        // Radix restores focus to the mini-player trigger on dismissal.
+        if (!current.current) event.preventDefault()
+      }}>
+        <p className="now-playing-label text-center">{t('player.title')}</p>
+        <EpisodeArtwork large />
+        <DialogHeader><DialogTitle>{episode.name}</DialogTitle><DialogDescription>{t('podcasts.profile')}: {source}</DialogDescription></DialogHeader>
+        {feedback()}{timeline()}{controls()}
+        <Button variant="ghost" onClick={() => setExpanded(false)}>{t('player.minimize')}</Button>
+      </DialogContent>
+    </Dialog>}
   </PlayerContext.Provider>
 }

@@ -33,6 +33,8 @@ import {
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { EpisodeArtwork } from './EpisodeArtwork'
+import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import type { TFunction } from 'i18next'
 
@@ -157,6 +159,8 @@ export function EpisodeCard({ episode, onDelete, deleting, onRetry, retrying }: 
   const { t, language } = useTranslation()
   const player = usePodcastPlayer()
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [actionsOpen, setActionsOpen] = useState(false)
+  const isMobile = useMediaQuery('(max-width: 767px)')
 
   const outlineSegments = useMemo(() => extractOutlineSegments(episode.outline), [episode.outline])
   const transcriptEntries = useMemo(() => extractTranscriptEntries(episode.transcript), [episode.transcript])
@@ -188,8 +192,9 @@ export function EpisodeCard({ episode, onDelete, deleting, onRetry, retrying }: 
   return (
     <Card className="episode-card shadow-sm">
       <CardContent className="space-y-4 p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
+        <div className="episode-card-layout">
+          <EpisodeArtwork />
+          <div className="episode-metadata space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-base font-semibold text-foreground">
                 {episode.name}
@@ -201,9 +206,11 @@ export function EpisodeCard({ episode, onDelete, deleting, onRetry, retrying }: 
               {createdLabel ? ` • ${createdLabel}` : ''}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="episode-actions">
+            {episode.audio_url && <Button className="episode-play" aria-label={t(player.episode?.id === episode.id && player.playing ? 'player.pause' : 'player.play')} onClick={() => void player.select(episode)}>{t(player.episode?.id === episode.id && player.playing ? 'player.pause' : 'player.play')}</Button>}
+            {isMobile && <Button variant="ghost" aria-label={t('common.actions')} aria-expanded={actionsOpen} onClick={() => setActionsOpen(open => !open)}>•••</Button>}
+            {(!isMobile || actionsOpen) && <div className="episode-management-actions">
             <FolderAssignment kind="podcast" id={episode.id} folder_id={episode.folder_id} />
-            {episode.audio_url && <Button aria-label={t(player.episode?.id === episode.id && player.playing ? 'player.pause' : 'player.play')} onClick={() => void player.select(episode)}>{t(player.episode?.id === episode.id && player.playing ? 'player.pause' : 'player.play')}</Button>}
             <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -383,6 +390,7 @@ export function EpisodeCard({ episode, onDelete, deleting, onRetry, retrying }: 
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            </div>}
           </div>
         </div>
 

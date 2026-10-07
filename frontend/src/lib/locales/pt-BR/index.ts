@@ -16,6 +16,8 @@ export const ptBR = {
     "deleteDescription": "Os itens ficarão sem pasta. Cadernos, fontes e áudio não serão excluídos."
   },
   player: {
+    "expand": "Expandir player",
+    "minimize": "Voltar à biblioteca",
     "title": "Reproduzindo",
     "play": "Reproduzir",
     "pause": "Pausar",

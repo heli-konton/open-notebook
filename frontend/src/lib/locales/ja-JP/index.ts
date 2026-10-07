@@ -16,6 +16,8 @@ export const jaJP = {
     "deleteDescription": "項目は未分類になります。ノートブック、ソース、音声は削除されません。"
   },
   player: {
+    "expand": "プレーヤーを開く",
+    "minimize": "ライブラリに戻る",
     "title": "再生中",
     "play": "再生",
     "pause": "一時停止",

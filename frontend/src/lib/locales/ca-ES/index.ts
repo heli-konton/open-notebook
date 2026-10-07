@@ -16,6 +16,8 @@ export const caES = {
     "deleteDescription": "Els elements quedaran sense carpeta. No se suprimiran quaderns, fonts ni àudio."
   },
   player: {
+    "expand": "Amplia el reproductor",
+    "minimize": "Torna a la biblioteca",
     "title": "En reproducció",
     "play": "Reprodueix",
     "pause": "Pausa",
