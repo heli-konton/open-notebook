@@ -11,7 +11,6 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-
 SETTLE = """async el => {
   const deadline = performance.now() + 5000;
   const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
