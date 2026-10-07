@@ -10,8 +10,8 @@ concurrency:
   group: nova-release-validation
   cancel-in-progress: false
 env:
-  APP_SHA: f0c381a2bdf72a61cfdc1df9f5e1ddbab9113778
-  IMAGE: ghcr.io/heli-konton/open-notebook:nova-candidate-f0c381a2bdf7
+  APP_SHA: a6fe58712dbe65266e8899f2195bfeacd195f79f
+  IMAGE: ghcr.io/heli-konton/open-notebook:nova-candidate-a6fe58712dbe
 defaults:
   run:
     shell: bash
@@ -24,7 +24,7 @@ jobs:
       name: Checkout frozen application
       uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
       with:
-        ref: f0c381a2bdf72a61cfdc1df9f5e1ddbab9113778
+        ref: a6fe58712dbe65266e8899f2195bfeacd195f79f
         persist-credentials: false
     - &id002
       name: Verify source receipt
@@ -154,8 +154,8 @@ jobs:
         target: runtime
         platforms: linux/amd64
         push: true
-        tags: ghcr.io/heli-konton/open-notebook:nova-candidate-f0c381a2bdf7
-        labels: 'org.opencontainers.image.revision=f0c381a2bdf72a61cfdc1df9f5e1ddbab9113778
+        tags: ghcr.io/heli-konton/open-notebook:nova-candidate-a6fe58712dbe
+        labels: 'org.opencontainers.image.revision=a6fe58712dbe65266e8899f2195bfeacd195f79f
 
           org.opencontainers.image.source=https://github.com/heli-konton/open-notebook
 
@@ -175,7 +175,7 @@ jobs:
 
         cat evidence/image-config.json
 
-        python -c ''import json; c=json.load(open("evidence/image-config.json")); assert c["os"]=="linux" and c["architecture"]=="amd64"; assert c["config"]["Labels"]["org.opencontainers.image.revision"]=="f0c381a2bdf72a61cfdc1df9f5e1ddbab9113778"''
+        python -c ''import json; c=json.load(open("evidence/image-config.json")); assert c["os"]=="linux" and c["architecture"]=="amd64"; assert c["config"]["Labels"]["org.opencontainers.image.revision"]=="a6fe58712dbe65266e8899f2195bfeacd195f79f"''
 
         printf ''Candidate only; not authorized for deployment.
 
