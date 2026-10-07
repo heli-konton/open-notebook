@@ -342,7 +342,10 @@ button, a, summary, input[type="range"] { touch-action: manipulation; }
   .podcast-player .player-controls button { min-width: 44px; }
   .podcast-player .player-controls button:first-child span { display: none; }
   .player-track { gap: 10px; }
-  .now-playing-sheet { top: auto; bottom: 0; left: 0; width: 100%; max-width: none; max-height: 95dvh; transform: none; translate: none; border-radius: 28px 28px 0 0; padding: 28px 24px calc(24px + env(safe-area-inset-bottom)); }
+  /* Reset Tailwind's independent centering axes, not only translate:none:
+     production CSS optimization folds that reset into transform, leaving the
+     DialogContent translate utilities active. Keep desktop dialogs centered. */
+  .now-playing-sheet { --tw-translate-x: 0; --tw-translate-y: 0; top: auto; bottom: 0; left: 0; width: 100%; max-width: none; max-height: 95dvh; transform: none; translate: none; border-radius: 28px 28px 0 0; padding: 28px 24px calc(24px + env(safe-area-inset-bottom)); }
   button, select, [role="tab"] { min-height: 44px; }
   .app-shell main > div > .p-6 { padding: 16px; }
   .group .opacity-0 { opacity: 1; }
