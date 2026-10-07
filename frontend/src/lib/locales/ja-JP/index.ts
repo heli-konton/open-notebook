@@ -1,6 +1,30 @@
 import type { TranslationShape } from '../en-US';
 
 export const jaJP = {
+  folders: {
+    "title": "フォルダー",
+    "all": "すべて",
+    "unfiled": "未分類",
+    "create": "新しいフォルダー",
+    "name": "フォルダー名",
+    "move": "フォルダーに移動",
+    "saved": "フォルダーを更新しました",
+    "error": "フォルダーを更新できませんでした。再試行してください。",
+    "renameTitle": "フォルダー名を変更",
+    "deleteTitle": "フォルダーを削除",
+    "description": "階層のないフォルダーでライブラリーを整理します。",
+    "deleteDescription": "項目は未分類になります。ノートブック、ソース、音声は削除されません。"
+  },
+  player: {
+    "title": "再生中",
+    "play": "再生",
+    "pause": "一時停止",
+    "stop": "停止してリセット",
+    "rewind": "15秒戻る",
+    "seek": "再生位置",
+    "close": "プレーヤーを閉じる"
+  },
+
   common: {
     search: "検索...",
     create: "新規",
@@ -38,7 +62,7 @@ export const jaJP = {
     podcast: "ポッドキャスト",
     quickActions: "クイックアクション",
     quickActionsDesc: "ナビゲーション、検索、質問、テーマ",
-    appName: "Open Notebook",
+    appName: "nova_notes",
     add: "追加",
     remove: "削除",
     confirm: "確認",
@@ -177,7 +201,7 @@ export const jaJP = {
   },
   connectionErrors: {
     apiTitle: "APIサーバーに接続できません",
-    apiDesc: "Open Notebook APIサーバーに到達できませんでした",
+    apiDesc: "nova_notes APIサーバーに到達できませんでした",
     dbTitle: "データベース接続に失敗しました",
     dbDesc: "APIサーバーは稼働していますが、データベースにアクセスできません",
     troubleshooting: "考えられる原因：",
@@ -191,7 +215,7 @@ export const jaJP = {
     setApiUrl: "API_URL環境変数を設定:",
     checkSurreal: "SurrealDBが起動しているか確認:",
     seeDocumentation: "詳細なセットアップ手順はこちら:",
-    docLink: "Open Notebookドキュメント",
+    docLink: "nova_notesドキュメント",
     showTechnical: "技術的な詳細を表示",
     attemptedUrl: "接続試行URL",
     message: "メッセージ",
@@ -203,7 +227,7 @@ export const jaJP = {
     localDevLabel: "ローカル開発の場合",
   },
   auth: {
-    loginTitle: "Open Notebook",
+    loginTitle: "nova_notes",
     loginDesc: "パスワードを入力してアプリケーションにアクセス",
     passwordPlaceholder: "パスワード",
     signingIn: "サインイン中...",
@@ -781,7 +805,7 @@ export const jaJP = {
     visionEnabled: "画像とグラフを説明する",
     visionHelp: "Doclingエンジン使用時に、ビジョンモデルを使用して画像を説明し、グラフのデータを抽出します。処理が大幅に遅くなり、ビジョンモデルを呼び出す場合があります。",
     autoDeletePlaceholder: "自動削除オプションを選択",
-    filesHelp: "ファイルがアップロードされて処理されると、ファイル自体は不要になります。ほとんどのユーザーはOpen Notebookがアップロードフォルダから自動的にファイルを削除することを許可すべきです。",
+    filesHelp: "ファイルがアップロードされて処理されると、ファイル自体は不要になります。ほとんどのユーザーはnova_notesがアップロードフォルダから自動的にファイルを削除することを許可すべきです。",
     loadFailed: "設定の読み込みに失敗しました",
   },
   advanced: {
@@ -794,7 +818,7 @@ export const jaJP = {
     latestVersion: "最新バージョン",
     status: "ステータス",
     updateAvailable: "バージョン{{version}}が利用可能",
-    updateAvailableDesc: "Open Notebookの新しいバージョンが利用可能です。",
+    updateAvailableDesc: "nova_notesの新しいバージョンが利用可能です。",
     upToDate: "最新版です",
     unknown: "不明",
     viewOnGithub: "GitHubで表示",
@@ -876,8 +900,8 @@ export const jaJP = {
     modelTypeHint: "追加するモデルのタイプを選択してください。異なるタイプが必要な場合は、別々のバッチで追加してください。",
     deleteModel: "モデルを削除",
     defaultAssignments: "デフォルトモデル割り当て",
-    defaultAssignmentsDesc: "Open Notebook全体で異なる目的に使用するモデルを設定",
-    missingRequiredModels: "必須モデルがありません: {{models}}。これらがないとOpen Notebookが正しく機能しない可能性があります。",
+    defaultAssignmentsDesc: "nova_notes全体で異なる目的に使用するモデルを設定",
+    missingRequiredModels: "必須モデルがありません: {{models}}。これらがないとnova_notesが正しく機能しない可能性があります。",
     selectModelPlaceholder: "モデルを選択",
     noneOption: "なし",
     noneFallbackToChat: "フォールバックを使用（チャットのデフォルト）",
@@ -924,7 +948,7 @@ export const jaJP = {
   },
   apiKeys: {
     title: "独自のAPIキーでAIを設定",
-    description: "APIキーをデータベースに安全に保存し、AIプロバイダーをOpen Notebookで利用可能にします。",
+    description: "APIキーをデータベースに安全に保存し、AIプロバイダーをnova_notesで利用可能にします。",
     encryptionRequired: "暗号化キーが設定されていません",
     encryptionRequiredDescription: "OPEN_NOTEBOOK_ENCRYPTION_KEY 環境変数に任意の秘密文字列を設定して、データベースへのAPIキーの保存を有効にしてください。",
     configured: "設定済み",

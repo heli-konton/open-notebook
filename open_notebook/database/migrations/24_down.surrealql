@@ -1,0 +1,4 @@
+REMOVE EVENT folder_delete ON folder;
+REMOVE FIELD folder_id ON notebook;
+REMOVE FIELD folder_id ON episode;
+REMOVE TABLE folder;

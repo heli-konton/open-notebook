@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/hooks/use-auth'
 import { useAuthStore } from '@/lib/stores/auth-store'
@@ -141,6 +142,7 @@ export function LoginForm() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <Image src="/logo.svg" width={64} height={64} alt="" className="mx-auto mb-3" />
           <CardTitle>{t('auth.loginTitle')}</CardTitle>
           <CardDescription>
             {t('auth.loginDesc')}

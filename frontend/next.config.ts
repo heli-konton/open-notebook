@@ -2,15 +2,23 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Enable standalone output for optimized Docker deployment
-  output: "standalone",
+  // CI/low-disk verification can omit only the duplicated standalone bundle.
+  // Deployment builds keep the upstream standalone output by default.
+  output: process.env.NOVA_NOTES_BOUNDED_BUILD === '1' ? undefined : "standalone",
 
   // Experimental features
   // Type assertion needed: proxyClientMaxBodySize is valid in Next.js 15 but types lag behind
   experimental: {
+    ...(process.env.NOVA_NOTES_BOUNDED_BUILD === '1' ? { cpus: 1 } : {}),
     // Increase proxy body size limit for file uploads (default is 10MB)
     // This allows larger files to be uploaded through the /api/* rewrite proxy to FastAPI
     proxyClientMaxBodySize: '100mb',
   } as NextConfig['experimental'],
+
+  webpack(config) {
+    if (process.env.NOVA_NOTES_BOUNDED_BUILD === '1') config.cache = false
+    return config
+  },
 
   // API Rewrites: Proxy /api/* requests to FastAPI backend
   // This simplifies reverse proxy configuration - users only need to proxy to port 8502

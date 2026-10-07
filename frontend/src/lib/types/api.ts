@@ -1,4 +1,5 @@
 export interface NotebookResponse {
+  folder_id?: string | null
   id: string
   name: string
   description: string

@@ -1,6 +1,30 @@
 import type { TranslationShape } from '../en-US';
 
 export const zhTW = {
+  folders: {
+    "title": "資料夾",
+    "all": "全部",
+    "unfiled": "未分類",
+    "create": "新增資料夾",
+    "name": "資料夾名稱",
+    "move": "移至資料夾",
+    "saved": "資料夾已更新",
+    "error": "無法更新資料夾。請重試。",
+    "renameTitle": "重新命名資料夾",
+    "deleteTitle": "刪除資料夾",
+    "description": "使用無巢狀的資料夾整理資料庫。",
+    "deleteDescription": "項目將變為未分類。筆記本、來源和音訊不會被刪除。"
+  },
+  player: {
+    "title": "正在播放",
+    "play": "播放",
+    "pause": "暫停",
+    "stop": "停止並重設",
+    "rewind": "倒退15秒",
+    "seek": "播放位置",
+    "close": "關閉播放器"
+  },
+
   common: {
     search: "搜尋...",
     create: "新增",
@@ -38,7 +62,7 @@ export const zhTW = {
     podcast: "播客",
     quickActions: "快捷操作",
     quickActionsDesc: "導覽、搜尋、提問、主題",
-    appName: "Open Notebook",
+    appName: "nova_notes",
     add: "新增",
     remove: "移除",
     confirm: "確認",
@@ -177,7 +201,7 @@ export const zhTW = {
   },
   connectionErrors: {
     apiTitle: "無法連線到 API 伺服器",
-    apiDesc: "無法存取 Open Notebook API 伺服器",
+    apiDesc: "無法存取 nova_notes API 伺服器",
     dbTitle: "資料庫連線失敗",
     dbDesc: "API 伺服器正在執行，但無法存取資料庫",
     troubleshooting: "這通常意味着：",
@@ -191,7 +215,7 @@ export const zhTW = {
     setApiUrl: "設定 API_URL 環境變數：",
     checkSurreal: "檢查 SurrealDB 是否運行：",
     seeDocumentation: "有關詳細設定說明，請參閱：",
-    docLink: "Open Notebook 文件",
+    docLink: "nova_notes 文件",
     showTechnical: "顯示技術細節",
     attemptedUrl: "嘗試的 URL",
     message: "訊息",
@@ -203,7 +227,7 @@ export const zhTW = {
     localDevLabel: "對於本地開發",
   },
   auth: {
-    loginTitle: "Open Notebook",
+    loginTitle: "nova_notes",
     loginDesc: "輸入密碼以存取應用程式",
     passwordPlaceholder: "密碼",
     signingIn: "正在登入...",
@@ -794,7 +818,7 @@ export const zhTW = {
     latestVersion: "最新版本",
     status: "狀態",
     updateAvailable: "版本 {{version}} 可用",
-    updateAvailableDesc: "Open Notebook 的新版本可用。",
+    updateAvailableDesc: "nova_notes 的新版本可用。",
     upToDate: "已是最新",
     unknown: "未知",
     viewOnGithub: "在 GitHub 上查看",
@@ -876,8 +900,8 @@ export const zhTW = {
     modelTypeHint: "選擇要新增的模型類型。如果需要不同類型，請分批新增。",
     deleteModel: "刪除模型",
     defaultAssignments: "預設模型分配",
-    defaultAssignmentsDesc: "設定用於 Open Notebook 不同用途的預設模型",
-    missingRequiredModels: "缺少必需的模型：{{models}}。如果没有這些模型，Open Notebook 可能無法正常運行。",
+    defaultAssignmentsDesc: "設定用於 nova_notes 不同用途的預設模型",
+    missingRequiredModels: "缺少必需的模型：{{models}}。如果没有這些模型，nova_notes 可能無法正常運行。",
     selectModelPlaceholder: "選擇一個模型",
     noneOption: "無",
     noneFallbackToChat: "使用備用（聊天預設模型）",
@@ -924,7 +948,7 @@ export const zhTW = {
   },
   apiKeys: {
     title: "使用您自己的 API 金鑰設定 AI",
-    description: "將 API 金鑰安全地儲存在資料庫中，以在 Open Notebook 中啟用 AI 服務商。",
+    description: "將 API 金鑰安全地儲存在資料庫中，以在 nova_notes 中啟用 AI 服務商。",
     encryptionRequired: "未設定加密金鑰",
     encryptionRequiredDescription: "請將 OPEN_NOTEBOOK_ENCRYPTION_KEY 環境變數設定為任意密鑰字串，以啟用將 API 金鑰儲存至資料庫。",
     configured: "已設定",

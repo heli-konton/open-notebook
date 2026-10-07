@@ -6,6 +6,7 @@ from surrealdb import RecordID
 
 from open_notebook.database.repository import ensure_record_id, repo_query
 from open_notebook.domain.base import ObjectModel
+from open_notebook.domain.folder_item import FolderItem
 
 
 async def _resolve_model_config(
@@ -215,7 +216,7 @@ class SpeakerProfile(ObjectModel):
         return await cls.get_by_name(ref_str)
 
 
-class PodcastEpisode(ObjectModel):
+class PodcastEpisode(FolderItem):
     """Enhanced PodcastEpisode with job tracking and metadata"""
 
     table_name: ClassVar[str] = "episode"

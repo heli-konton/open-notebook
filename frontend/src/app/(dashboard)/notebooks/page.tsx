@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 
+import { FolderPanel, filterFolderItems } from '@/components/folders/FolderPanel'
 import { AppShell } from '@/components/layout/AppShell'
 import { NotebookList } from './components/NotebookList'
 import { RecentlyViewed } from './components/RecentlyViewed'
@@ -16,6 +17,7 @@ import { useNotebookViewStore } from '@/lib/stores/notebook-view-store'
 export default function NotebooksPage() {
   const { t } = useTranslation()
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [folder, setFolder] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
   const viewMode = useNotebookViewStore((state) => state.viewMode)
   const setViewMode = useNotebookViewStore((state) => state.setViewMode)
@@ -29,24 +31,24 @@ export default function NotebooksPage() {
       return undefined
     }
     if (!normalizedQuery) {
-      return notebooks
+      return filterFolderItems(notebooks, folder)
     }
-    return notebooks.filter((notebook) =>
+    return filterFolderItems(notebooks, folder).filter((notebook) =>
       notebook.name.toLowerCase().includes(normalizedQuery)
     )
-  }, [notebooks, normalizedQuery])
+  }, [notebooks, normalizedQuery, folder])
 
   const filteredArchived = useMemo(() => {
     if (!archivedNotebooks) {
       return undefined
     }
     if (!normalizedQuery) {
-      return archivedNotebooks
+      return filterFolderItems(archivedNotebooks, folder)
     }
-    return archivedNotebooks.filter((notebook) =>
+    return filterFolderItems(archivedNotebooks, folder).filter((notebook) =>
       notebook.name.toLowerCase().includes(normalizedQuery)
     )
-  }, [archivedNotebooks, normalizedQuery])
+  }, [archivedNotebooks, normalizedQuery, folder])
 
   const hasArchived = (archivedNotebooks?.length ?? 0) > 0
   const isSearching = normalizedQuery.length > 0
@@ -55,7 +57,7 @@ export default function NotebooksPage() {
     <AppShell>
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold">{t('notebooks.title')}</h1>
             <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -102,8 +104,10 @@ export default function NotebooksPage() {
           </div>
         </div>
         
-        <div className="space-y-8">
-          <RecentlyViewed />
+        <div className="collection-layout">
+          <FolderPanel kind="notebook" items={[...(notebooks ?? []), ...(archivedNotebooks ?? [])]} value={folder} onChange={setFolder} />
+        <div className="space-y-8 min-w-0">
+          {folder === 'all' && <RecentlyViewed />}
 
           <NotebookList 
             notebooks={filteredActive} 
@@ -125,6 +129,7 @@ export default function NotebooksPage() {
               emptyDescription={isSearching ? t('common.tryDifferentSearch') : undefined}
             />
           )}
+        </div>
         </div>
         </div>
       </div>

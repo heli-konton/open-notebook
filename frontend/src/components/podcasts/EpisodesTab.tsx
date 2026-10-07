@@ -4,6 +4,8 @@ import { useCallback, useState } from 'react'
 import { AlertCircle, Loader2, RefreshCcw } from 'lucide-react'
 
 import { useDeletePodcastEpisode, usePodcastEpisodes, useRetryPodcastEpisode } from '@/lib/hooks/use-podcasts'
+import { FolderPanel, filterFolderItems } from '@/components/folders/FolderPanel'
+import { groupEpisodesByStatus } from '@/lib/types/podcasts'
 import { EpisodeCard } from '@/components/podcasts/EpisodeCard'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -51,10 +53,10 @@ function SummaryBadge({ label, value }: { label: string; value: number }) {
 
 export function EpisodesTab() {
   const { t } = useTranslation()
+  const [folder, setFolder] = useState('all')
   const [showGenerateDialog, setShowGenerateDialog] = useState(false)
   const {
     episodes,
-    statusGroups,
     statusCounts,
     isLoading,
     isError,
@@ -78,7 +80,9 @@ export function EpisodesTab() {
     [retryEpisode]
   )
 
-  const emptyState = !isLoading && episodes.length === 0
+  const visible = filterFolderItems(episodes, folder)
+  const statusGroups = groupEpisodesByStatus(visible)
+  const emptyState = !isLoading && visible.length === 0
 
   return (
     <div className="space-y-6">
@@ -109,6 +113,9 @@ export function EpisodesTab() {
         </div>
       </div>
 
+      <div className="collection-layout">
+      <FolderPanel kind="podcast" items={episodes} value={folder} onChange={setFolder} />
+      <div className="space-y-6 min-w-0">
       <div className="flex flex-wrap gap-2">
         <SummaryBadge label={t('podcasts.total')} value={statusCounts.total} />
         <SummaryBadge label={t('podcasts.processingLabel')} value={statusCounts.running} />
@@ -173,6 +180,8 @@ export function EpisodesTab() {
         )
       })}
 
+      </div>
+      </div>
       <GeneratePodcastDialog
         open={showGenerateDialog}
         onOpenChange={setShowGenerateDialog}

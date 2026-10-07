@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { FolderAssignment } from '@/components/folders/FolderAssignment'
 import { NotebookResponse } from '@/lib/types/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -91,6 +92,7 @@ export function NotebookRow({ notebook }: NotebookRowProps) {
           }) })}
         </div>
 
+        <FolderAssignment kind="notebook" id={notebook.id} folder_id={notebook.folder_id} />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

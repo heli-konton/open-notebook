@@ -5,6 +5,17 @@ import { EpisodeCard } from './EpisodeCard'
 import type { PodcastEpisode } from '@/lib/types/podcasts'
 
 // useTranslation is mocked globally in setup.ts (t returns the key string)
+const selectEpisode = vi.fn()
+vi.mock('./PodcastPlayer', () => ({ usePodcastPlayer: () => ({ select: selectEpisode, playing: false, episode: null, clear: vi.fn() }) }))
+vi.mock('@/lib/hooks/use-folders', () => ({ useFolders: () => ({ data: [] }), useFolderMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) }))
+
+it('opens the persistent player without mounting competing card audio nodes', () => {
+  const episode = makeEpisode({ audio_url: '/api/podcasts/episodes/episode:1/audio' })
+  const view = render(<EpisodeCard episode={episode} onDelete={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', { name: 'player.play' }))
+  expect(selectEpisode).toHaveBeenCalledWith(episode)
+  expect(view.container.querySelector('audio')).toBeNull()
+})
 
 vi.mock('@/lib/api/client', () => ({
   default: { get: vi.fn() },
