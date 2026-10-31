@@ -8,7 +8,7 @@ permissions:
   packages: write
 
 env:
-  SOURCE_IMAGE: lfnovo/open_notebook@sha256:e53f90d6153fcf4a64604d9a0c12cb0428a32cfb8dbcbb72e81ab12c013ee330
+  SOURCE_IMAGE: lfnovo/open_notebook@sha256:54b2025a4a4853c188f74b9b8246eca8c5480e5dd1babfa92db1038ff2f30212
   TARGET_IMAGE: ghcr.io/heli-konton/open-notebook
 
 jobs:
@@ -67,14 +67,14 @@ jobs:
 
       - name: Publish NovaHQ baseline tags
         run: |
-          docker tag "$SOURCE_IMAGE" "$TARGET_IMAGE:v1.14.0-nova-baseline"
+          docker tag "$SOURCE_IMAGE" "$TARGET_IMAGE:v1.15.0-nova-baseline"
           docker tag "$SOURCE_IMAGE" "$TARGET_IMAGE:nova-main"
-          docker push "$TARGET_IMAGE:v1.14.0-nova-baseline"
+          docker push "$TARGET_IMAGE:v1.15.0-nova-baseline"
           docker push "$TARGET_IMAGE:nova-main"
 
       - name: Verify published image
         run: |
-          docker buildx imagetools inspect "$TARGET_IMAGE:v1.14.0-nova-baseline"
+          docker buildx imagetools inspect "$TARGET_IMAGE:v1.15.0-nova-baseline"
           docker buildx imagetools inspect "$TARGET_IMAGE:nova-main"
 
       - name: Diagnostic logs on failure
