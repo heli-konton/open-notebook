@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { getDateLocale } from '@/lib/utils/date-locale'
 import { InfoIcon, RefreshCcw, Trash2 } from 'lucide-react'
 
-import apiClient from '@/lib/api/client'
-import { resolvePodcastAssetUrl } from '@/lib/api/podcasts'
+import { useEpisodeAudio } from '@/lib/hooks/use-episode-audio'
+import { EpisodeProgress } from '@/components/podcasts/EpisodeProgress'
 import { EpisodeStatus, FAILED_EPISODE_STATUSES, PodcastEpisode } from '@/lib/types/podcasts'
 import { cn } from '@/lib/utils'
 import {
@@ -155,51 +155,11 @@ function extractTranscriptEntries(transcript: unknown): TranscriptEntry[] {
 
 export function EpisodeCard({ episode, onDelete, deleting, onRetry, retrying }: EpisodeCardProps) {
   const { t, language } = useTranslation()
-  const [audioSrc, setAudioSrc] = useState<string | undefined>()
-  const [audioError, setAudioError] = useState<string | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const { audioSrc, audioError } = useEpisodeAudio(episode)
 
   const outlineSegments = useMemo(() => extractOutlineSegments(episode.outline), [episode.outline])
   const transcriptEntries = useMemo(() => extractTranscriptEntries(episode.transcript), [episode.transcript])
-
-  useEffect(() => {
-    let revokeUrl: string | undefined
-    setAudioError(null)
-
-    // If backend exposed a protected endpoint, fetch it with auth headers
-    const loadProtectedAudio = async () => {
-      // First resolve the audio URL
-      const directAudioUrl = await resolvePodcastAssetUrl(episode.audio_url ?? episode.audio_file)
-
-      if (!directAudioUrl || !episode.audio_url) {
-        setAudioSrc(directAudioUrl)
-        return
-      }
-
-      try {
-        // apiClient attaches the auth header; directAudioUrl is absolute so
-        // the dynamic baseURL is ignored.
-        const response = await apiClient.get<Blob>(directAudioUrl, {
-          responseType: 'blob',
-        })
-
-        revokeUrl = URL.createObjectURL(response.data)
-        setAudioSrc(revokeUrl)
-      } catch (error) {
-        console.error('Unable to load podcast audio', error)
-        setAudioError(t('podcasts.audioUnavailable'))
-        setAudioSrc(undefined)
-      }
-    }
-
-    void loadProtectedAudio()
-
-    return () => {
-      if (revokeUrl) {
-        URL.revokeObjectURL(revokeUrl)
-      }
-    }
-  }, [episode.audio_url, episode.audio_file, t])
 
   const distance = episode.created
     ? formatDistanceToNow(new Date(episode.created), {
@@ -429,6 +389,8 @@ export function EpisodeCard({ episode, onDelete, deleting, onRetry, retrying }: 
             </AlertDialog>
           </div>
         </div>
+
+        <EpisodeProgress status={episode.job_status} progress={episode.progress} />
 
         {audioSrc ? (
           <div className="rounded-md border bg-card p-2">

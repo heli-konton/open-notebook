@@ -87,6 +87,10 @@ export interface PodcastEpisode {
   outline?: Record<string, unknown> | null
   created?: string | null
   job_status?: EpisodeStatus | null
+  /** Notebook the episode is filed under (null for standalone episodes) */
+  notebook_id?: string | null
+  /** Generation progress 0-100 (null when unknown) */
+  progress?: number | null
   error_message?: string | null
 }
 

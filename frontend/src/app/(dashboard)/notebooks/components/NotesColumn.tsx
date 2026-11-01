@@ -15,6 +15,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { EmptyState } from '@/components/common/EmptyState'
 import { Badge } from '@/components/ui/badge'
 import { NoteEditorDialog } from './NoteEditorDialog'
+import { NotebookPodcasts } from './NotebookPodcasts'
 import { getDateLocale } from '@/lib/utils/date-locale'
 import { formatDistanceToNow } from 'date-fns'
 import { ContextToggle } from '@/components/common/ContextToggle'
@@ -215,6 +216,8 @@ export function NotesColumn({
                 ))}
               </div>
             )}
+
+            <NotebookPodcasts notebookId={notebookId} />
           </CardContent>
         </Card>
       </CollapsibleColumn>

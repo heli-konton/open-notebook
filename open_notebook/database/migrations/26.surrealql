@@ -1,0 +1,7 @@
+-- Migration 26: link podcast episodes to a notebook and track generation progress.
+-- `notebook` is the notebook the episode was generated from (NONE for episodes
+-- created without one); `progress` is the 0-100 generation progress.
+DEFINE FIELD IF NOT EXISTS notebook ON TABLE episode TYPE option<record<notebook>>;
+DEFINE FIELD IF NOT EXISTS progress ON TABLE episode TYPE option<int>
+    ASSERT $value = NONE OR ($value >= 0 AND $value <= 100);
+DEFINE INDEX IF NOT EXISTS idx_episode_notebook ON TABLE episode COLUMNS notebook CONCURRENTLY;

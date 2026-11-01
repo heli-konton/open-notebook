@@ -119,6 +119,19 @@ class PodcastEpisodeResponse(BaseModel):
     created: Optional[str] = None
     job_status: Optional[str] = None
     error_message: Optional[str] = None
+    notebook_id: Optional[str] = None
+    progress: Optional[int] = None
+
+
+def _effective_progress(
+    job_status: Optional[str], progress: Optional[int]
+) -> Optional[int]:
+    """Progress to report: completed jobs are 100, queued/new ones 0."""
+    if job_status == "completed":
+        return 100
+    if progress is None and job_status in ("queued", "new"):
+        return 0
+    return progress
 
 
 @router.post("/podcasts/generate", response_model=PodcastGenerationResponse)
@@ -171,10 +184,13 @@ async def get_podcast_job_status(job_id: str):
 
 
 @router.get("/podcasts/episodes", response_model=List[PodcastEpisodeResponse])
-async def list_podcast_episodes():
-    """List all podcast episodes"""
+async def list_podcast_episodes(notebook_id: Optional[str] = None):
+    """List podcast episodes, optionally filtered by notebook_id"""
     try:
-        episodes = await PodcastService.list_episodes()
+        if notebook_id:
+            episodes = await PodcastService.list_episodes(notebook_id=notebook_id)
+        else:
+            episodes = await PodcastService.list_episodes()
 
         # Batch-fetch job status for every episode with a command in one
         # query instead of one round trip per episode (see
@@ -239,6 +255,8 @@ async def list_podcast_episodes():
                     created=str(episode.created) if episode.created else None,
                     job_status=job_status,
                     error_message=error_message,
+                    notebook_id=str(episode.notebook) if episode.notebook else None,
+                    progress=_effective_progress(job_status, episode.progress),
                 )
             )
 
@@ -301,6 +319,8 @@ async def get_podcast_episode(episode_id: str):
             created=str(episode.created) if episode.created else None,
             job_status=job_status,
             error_message=error_message,
+            notebook_id=str(episode.notebook) if episode.notebook else None,
+            progress=_effective_progress(job_status, episode.progress),
         )
 
     except HTTPException:
@@ -384,6 +404,7 @@ async def retry_podcast_episode(episode_id: str):
             speaker_profile_name=sp_profile_name,
             episode_name=episode_name,
             content=content,
+            notebook_id=str(episode.notebook) if episode.notebook else None,
         )
 
         return {"job_id": job_id, "message": "Retry submitted successfully"}

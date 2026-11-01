@@ -247,6 +247,13 @@ class PodcastEpisode(ObjectModel):
         default=None, description="Link to surreal-commands job"
     )
 
+    notebook: Optional[Union[str, RecordID]] = Field(
+        default=None, description="Notebook the episode was generated from"
+    )
+    progress: Optional[int] = Field(
+        default=None, ge=0, le=100, description="Generation progress (0-100)"
+    )
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     async def get_job_status(self) -> Optional[str]:
@@ -320,11 +327,11 @@ class PodcastEpisode(ObjectModel):
             }
         return grouped
 
-    @field_validator("command", mode="before")
+    @field_validator("command", "notebook", mode="before")
     @classmethod
     def parse_command(cls, value):
         if isinstance(value, str):
-            return ensure_record_id(value)
+            return ensure_record_id(value) if value else None
         return value
 
     def _prepare_save_data(self) -> dict:
@@ -334,5 +341,10 @@ class PodcastEpisode(ObjectModel):
         # Ensure command field is RecordID format if not None
         if data.get("command") is not None:
             data["command"] = ensure_record_id(data["command"])
+
+        if data.get("notebook"):
+            data["notebook"] = ensure_record_id(data["notebook"])
+        else:
+            data.pop("notebook", None)
 
         return data

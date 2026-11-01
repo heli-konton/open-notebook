@@ -3,7 +3,10 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from loguru import logger
 
+from api.command_service import CommandService
 from api.models import (
+    DiscoverNotebookRequest,
+    DiscoverNotebookResponse,
     NotebookCreate,
     NotebookDeletePreview,
     NotebookDeleteResponse,
@@ -156,6 +159,68 @@ async def create_notebook(notebook: NotebookCreate):
         raise HTTPException(
             status_code=500, detail=f"Error creating notebook: {str(e)}"
         )
+
+
+@router.post("/notebooks/discover", response_model=DiscoverNotebookResponse)
+async def discover_notebook(request: DiscoverNotebookRequest):
+    """Create a notebook from a prompt: web-search, pick balanced sources, add
+    them as link sources (and optionally generate a podcast) in a background job.
+
+    Registered before any ``/notebooks/{notebook_id}`` route so it is not shadowed.
+    """
+    # Imported here so the command is registered before submit_command runs.
+    import commands.discovery_commands  # noqa: F401
+    from open_notebook.podcasts.models import EpisodeProfile, SpeakerProfile
+    from open_notebook.utils.discovery import generate_title
+
+    if request.create_podcast:
+        episode_profile = await EpisodeProfile.get_by_name(
+            (request.episode_profile or "").strip()
+        )
+        if not episode_profile:
+            raise NotFoundError(
+                f"Episode profile '{request.episode_profile}' not found"
+            )
+        if request.speaker_profile:
+            if not await SpeakerProfile.resolve(request.speaker_profile.strip()):
+                raise NotFoundError(
+                    f"Speaker profile '{request.speaker_profile}' not found"
+                )
+        elif not episode_profile.speaker_config:
+            raise InvalidInputError(
+                f"Episode profile '{episode_profile.name}' has no speaker profile; "
+                "pass speaker_profile"
+            )
+
+    title = await generate_title(request.prompt)
+    notebook = Notebook(name=title, description=request.prompt)
+    await notebook.save()
+    notebook_id = str(notebook.id)
+
+    try:
+        job_id = await CommandService.submit_command_job(
+            "open_notebook",
+            "discover_notebook",
+            {
+                "notebook_id": notebook_id,
+                "prompt": request.prompt,
+                "num_sources": request.num_sources,
+                "create_podcast": request.create_podcast,
+                "episode_profile": (request.episode_profile or "").strip() or None,
+                "speaker_profile": (request.speaker_profile or "").strip() or None,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Failed to submit discover_notebook job: {e}")
+        try:
+            await notebook.delete()
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail="Failed to start discovery")
+
+    return DiscoverNotebookResponse(
+        notebook_id=notebook_id, job_id=job_id, status="queued"
+    )
 
 
 @router.get("/recently-viewed", response_model=List[RecentlyViewedResponse])

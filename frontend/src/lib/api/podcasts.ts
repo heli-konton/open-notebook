@@ -31,8 +31,10 @@ export async function resolvePodcastAssetUrl(path?: string | null): Promise<stri
 }
 
 export const podcastsApi = {
-  listEpisodes: async () => {
-    const response = await apiClient.get<PodcastEpisode[]>('/podcasts/episodes')
+  listEpisodes: async (params?: { notebook_id?: string }) => {
+    const response = await apiClient.get<PodcastEpisode[]>('/podcasts/episodes', {
+      params: params?.notebook_id ? { notebook_id: params.notebook_id } : undefined,
+    })
     return response.data
   },
 

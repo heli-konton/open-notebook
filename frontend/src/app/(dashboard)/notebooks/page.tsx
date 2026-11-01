@@ -6,9 +6,11 @@ import { AppShell } from '@/components/layout/AppShell'
 import { NotebookList } from './components/NotebookList'
 import { RecentlyViewed } from './components/RecentlyViewed'
 import { Button } from '@/components/ui/button'
-import { Plus, RefreshCw, LayoutGrid, List } from 'lucide-react'
+import { Plus, RefreshCw, LayoutGrid, List, Compass, Mic } from 'lucide-react'
 import { useNotebooks } from '@/lib/hooks/use-notebooks'
 import { CreateNotebookDialog } from '@/components/notebooks/CreateNotebookDialog'
+import { DiscoverNotebookDialog } from '@/components/notebooks/DiscoverNotebookDialog'
+import type { DiscoverMode } from '@/components/notebooks/discover-notebook'
 import { Input } from '@/components/ui/input'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { useNotebookViewStore } from '@/lib/stores/notebook-view-store'
@@ -16,6 +18,7 @@ import { useNotebookViewStore } from '@/lib/stores/notebook-view-store'
 export default function NotebooksPage() {
   const { t } = useTranslation()
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [discoverMode, setDiscoverMode] = useState<DiscoverMode | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const viewMode = useNotebookViewStore((state) => state.viewMode)
   const setViewMode = useNotebookViewStore((state) => state.setViewMode)
@@ -99,6 +102,14 @@ export default function NotebooksPage() {
               <Plus className="h-4 w-4 mr-2" />
               {t('notebooks.newNotebook')}
             </Button>
+            <Button variant="outline" onClick={() => setDiscoverMode('notebook')}>
+              <Compass className="h-4 w-4 mr-2" />
+              {t('notebooks.discoverNotebook')}
+            </Button>
+            <Button variant="outline" onClick={() => setDiscoverMode('podcast')}>
+              <Mic className="h-4 w-4 mr-2" />
+              {t('notebooks.discoverPodcast')}
+            </Button>
           </div>
         </div>
         
@@ -132,6 +143,11 @@ export default function NotebooksPage() {
       <CreateNotebookDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
+      />
+      <DiscoverNotebookDialog
+        open={discoverMode !== null}
+        onOpenChange={(open) => { if (!open) setDiscoverMode(null) }}
+        mode={discoverMode ?? 'notebook'}
       />
     </AppShell>
   )

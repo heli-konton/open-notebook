@@ -4,7 +4,11 @@ import { QUERY_KEYS } from '@/lib/api/query-client'
 import { useToast } from '@/lib/hooks/use-toast'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { getApiErrorKey } from '@/lib/utils/error-handler'
-import { CreateNotebookRequest, UpdateNotebookRequest } from '@/lib/types/api'
+import {
+  CreateNotebookRequest,
+  NotebookDiscoverRequest,
+  UpdateNotebookRequest,
+} from '@/lib/types/api'
 
 export function useNotebooks(archived?: boolean) {
   return useQuery({
@@ -104,6 +108,33 @@ export function useDeleteNotebook() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
+        description: t(getApiErrorKey(error, t('common.error'))),
+        variant: 'destructive',
+      })
+    },
+  })
+}
+
+export function useDiscoverNotebook() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+  const { t } = useTranslation()
+
+  return useMutation({
+    mutationFn: (data: NotebookDiscoverRequest) => notebooksApi.discover(data),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notebooks })
+      if (variables.create_podcast) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
+      }
+      toast({
+        title: t('common.success'),
+        description: t('notebooks.discoverStarted'),
+      })
+    },
+    onError: (error: unknown) => {
+      toast({
+        title: t('notebooks.discoverFailed'),
         description: t(getApiErrorKey(error, t('common.error'))),
         variant: 'destructive',
       })

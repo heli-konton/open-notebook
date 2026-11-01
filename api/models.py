@@ -4,6 +4,45 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 
 # Notebook models
+class DiscoverNotebookRequest(BaseModel):
+    prompt: str = Field(
+        ..., min_length=3, max_length=2000, description="What to research"
+    )
+    create_podcast: bool = Field(False, description="Also generate a podcast")
+    episode_profile: Optional[str] = Field(
+        None, description="Episode profile NAME (required if create_podcast)"
+    )
+    speaker_profile: Optional[str] = Field(
+        None, description="Speaker profile NAME (default: the episode profile's own)"
+    )
+    num_sources: int = Field(10, description="Sources to add (clamped to 3-15)")
+
+    @field_validator("prompt")
+    @classmethod
+    def _strip_prompt(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) < 3:
+            raise ValueError("prompt must be at least 3 characters")
+        return v
+
+    @field_validator("num_sources")
+    @classmethod
+    def _clamp_num_sources(cls, v: int) -> int:
+        return max(3, min(15, v))
+
+    @model_validator(mode="after")
+    def _podcast_needs_profile(self):
+        if self.create_podcast and not (self.episode_profile or "").strip():
+            raise ValueError("episode_profile is required when create_podcast is true")
+        return self
+
+
+class DiscoverNotebookResponse(BaseModel):
+    notebook_id: str
+    job_id: str
+    status: str
+
+
 class NotebookCreate(BaseModel):
     name: str = Field(..., description="Name of the notebook")
     description: str = Field(default="", description="Description of the notebook")

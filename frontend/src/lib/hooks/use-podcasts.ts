@@ -39,12 +39,20 @@ function hasActiveEpisodes(episodes: PodcastEpisode[]) {
   })
 }
 
-export function usePodcastEpisodes(options?: { autoRefresh?: boolean }) {
-  const { autoRefresh = true } = options ?? {}
+/** Poll interval while any episode is in progress (keeps the percent fresh). */
+export const EPISODE_POLL_INTERVAL_MS = 8_000
+
+export function usePodcastEpisodes(options?: { autoRefresh?: boolean; notebookId?: string }) {
+  const { autoRefresh = true, notebookId } = options ?? {}
 
   const query = useQuery({
-    queryKey: QUERY_KEYS.podcastEpisodes,
-    queryFn: podcastsApi.listEpisodes,
+    // Notebook-scoped lists share the ['podcasts', 'episodes'] prefix so the
+    // existing invalidations/refetches cover them too.
+    queryKey: notebookId
+      ? [...QUERY_KEYS.podcastEpisodes, { notebookId }]
+      : QUERY_KEYS.podcastEpisodes,
+    queryFn: () => podcastsApi.listEpisodes(notebookId ? { notebook_id: notebookId } : undefined),
+    enabled: notebookId !== '',
     refetchInterval: (current) => {
       if (!autoRefresh) {
         return false
@@ -55,7 +63,7 @@ export function usePodcastEpisodes(options?: { autoRefresh?: boolean }) {
         return false
       }
 
-      return hasActiveEpisodes(data) ? 15_000 : false
+      return hasActiveEpisodes(data) ? EPISODE_POLL_INTERVAL_MS : false
     },
   })
 
