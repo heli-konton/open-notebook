@@ -6,6 +6,8 @@ import {
   UpdateNotebookRequest,
   NotebookDeletePreview,
   NotebookDeleteResponse,
+  NotebookDiscoverRequest,
+  NotebookDiscoverResponse,
 } from '@/lib/types/api'
 
 export const notebooksApi = {
@@ -28,6 +30,11 @@ export const notebooksApi = {
 
   create: async (data: CreateNotebookRequest) => {
     const response = await apiClient.post<NotebookResponse>('/notebooks', data)
+    return response.data
+  },
+
+  discover: async (data: NotebookDiscoverRequest) => {
+    const response = await apiClient.post<NotebookDiscoverResponse>('/notebooks/discover', data)
     return response.data
   },
 

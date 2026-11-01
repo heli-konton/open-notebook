@@ -9,6 +9,22 @@ export interface NotebookResponse {
   note_count: number
 }
 
+export interface NotebookDiscoverRequest {
+  prompt: string
+  create_podcast?: boolean
+  /** Episode profile NAME */
+  episode_profile?: string
+  /** Speaker profile NAME (defaults to the episode profile's) */
+  speaker_profile?: string
+  num_sources?: number
+}
+
+export interface NotebookDiscoverResponse {
+  notebook_id: string
+  job_id: string
+  status: string
+}
+
 export interface NoteResponse {
   id: string
   title: string | null

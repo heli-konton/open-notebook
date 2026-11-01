@@ -5,6 +5,7 @@ from loguru import logger
 from pydantic import BaseModel
 from surreal_commands import get_command_status, submit_command
 
+from open_notebook.database.repository import ensure_record_id, repo_query
 from open_notebook.domain.notebook import Notebook
 from open_notebook.podcasts.models import EpisodeProfile, PodcastEpisode, SpeakerProfile
 
@@ -83,6 +84,7 @@ class PodcastService:
                 "episode_name": episode_name,
                 "content": str(content),
                 "briefing_suffix": briefing_suffix,
+                "notebook_id": notebook_id or None,
             }
 
             # Ensure command modules are imported before submitting
@@ -137,9 +139,16 @@ class PodcastService:
             raise HTTPException(status_code=500, detail="Failed to get job status")
 
     @staticmethod
-    async def list_episodes() -> list:
-        """List all podcast episodes"""
+    async def list_episodes(notebook_id: Optional[str] = None) -> list:
+        """List podcast episodes, optionally only those linked to a notebook"""
         try:
+            if notebook_id:
+                rows = await repo_query(
+                    "SELECT * FROM episode WHERE notebook = $notebook "
+                    "ORDER BY created DESC",
+                    {"notebook": ensure_record_id(notebook_id)},
+                )
+                return [PodcastEpisode(**row) for row in rows]
             episodes = await PodcastEpisode.get_all(order_by="created desc")
             return episodes
         except Exception as e:

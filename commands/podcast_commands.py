@@ -1,3 +1,4 @@
+import asyncio
 import time
 import uuid
 from pathlib import Path
@@ -15,6 +16,7 @@ from open_notebook.podcasts.models import (
     SpeakerProfile,
     _resolve_model_config,
 )
+from open_notebook.podcasts.progress import PodcastProgressTracker
 from open_notebook.utils.model_utils import full_model_dump
 
 try:
@@ -105,6 +107,82 @@ class PodcastGenerationInput(CommandInput):
     episode_name: str
     content: str
     briefing_suffix: Optional[str] = None
+    # Notebook the episode is generated from; stored on the episode record.
+    notebook_id: Optional[str] = None
+
+
+async def write_episode_progress(episode_id: object, percent: int) -> None:
+    """Persist progress with a targeted UPDATE; never raises."""
+    try:
+        await repo_query(
+            "UPDATE $id SET progress = $progress",
+            {"id": ensure_record_id(str(episode_id)), "progress": percent},
+        )
+    except Exception as e:
+        logger.warning(f"Failed to write podcast progress {percent}%: {e}")
+
+
+class _ProgressReporter:
+    """Loguru sink that turns podcast_creator log lines into DB progress.
+
+    The sink is synchronous; DB writes are serialized on the event loop by a
+    single drain task that always writes the latest value, so throttling and
+    ordering hold even if several lines arrive between writes.
+    """
+
+    def __init__(self, episode: PodcastEpisode, loop: asyncio.AbstractEventLoop):
+        self.episode = episode
+        self.loop = loop
+        self.tracker = PodcastProgressTracker()
+        self.tracker.percent = episode.progress or 0
+        self._latest: Optional[int] = None
+        self._written: int = self.tracker.percent
+        self._task: Optional["asyncio.Future[None]"] = None
+        self._handler_id: Optional[int] = None
+
+    def attach(self) -> None:
+        self._handler_id = logger.add(
+            self._sink,
+            level="INFO",
+            filter=lambda record: record["name"] == "podcast_creator.nodes",
+            format="{message}",
+        )
+
+    def detach(self) -> None:
+        if self._handler_id is not None:
+            try:
+                logger.remove(self._handler_id)
+            except ValueError:
+                pass
+            self._handler_id = None
+
+    def _sink(self, message) -> None:
+        try:
+            text = message.record["message"]
+            percent = self.tracker.feed(text)
+            if percent is None:
+                return
+            self._latest = percent
+            self.loop.call_soon_threadsafe(self._ensure_drain)
+        except Exception as e:  # never break generation
+            logger.opt(depth=0).debug(f"progress sink error: {e}")
+
+    def _ensure_drain(self) -> None:
+        if self._task is None or self._task.done():
+            self._task = asyncio.ensure_future(self._drain())
+
+    async def _drain(self) -> None:
+        while self._latest is not None and self._latest != self._written:
+            value = self._latest
+            await write_episode_progress(self.episode.id, value)
+            self._written = value
+            self.episode.progress = value
+
+    async def flush(self) -> None:
+        # Let scheduled call_soon_threadsafe callbacks run, then wait.
+        await asyncio.sleep(0)
+        if self._task is not None:
+            await self._task
 
 
 class PodcastGenerationOutput(CommandOutput):
@@ -340,8 +418,11 @@ async def generate_podcast_command(
             audio_file=None,
             transcript=None,
             outline=None,
+            notebook=input_data.notebook_id or None,
         )
         await episode.save()
+        episode.progress = 1
+        await write_episode_progress(episode.id, 1)
 
         # SECURITY NOTE for future work: podcast_creator also supports
         # configure("templates", {...}), which compiles the given string
@@ -371,14 +452,23 @@ async def generate_podcast_command(
         # 8. Generate podcast using podcast-creator
         logger.info("Starting podcast generation with podcast-creator...")
 
-        result = await create_podcast(
-            content=input_data.content,
-            briefing=briefing,
-            episode_name=episode_dir_name,
-            output_dir=str(output_dir),
-            speaker_config=speaker_profile.name,
-            episode_profile=episode_profile.name,
-        )
+        reporter = _ProgressReporter(episode, asyncio.get_running_loop())
+        reporter.attach()
+        try:
+            result = await create_podcast(
+                content=input_data.content,
+                briefing=briefing,
+                episode_name=episode_dir_name,
+                output_dir=str(output_dir),
+                speaker_config=speaker_profile.name,
+                episode_profile=episode_profile.name,
+            )
+        finally:
+            reporter.detach()
+            try:
+                await reporter.flush()
+            except Exception as e:
+                logger.warning(f"Failed to flush podcast progress: {e}")
 
         # podcast-creator reports audio-combination failures IN-BAND: on
         # ffmpeg/clip errors combine_audio_files() returns an "ERROR: ..."
@@ -411,6 +501,10 @@ async def generate_podcast_command(
             # audio-combination error instead of reporting a silent success
             # for an episode with no playable audio.
             raise RuntimeError(f"Podcast audio generation failed: {audio_error}")
+
+        if audio_file_rel:
+            episode.progress = 100
+            await write_episode_progress(episode.id, 100)
 
         processing_time = time.time() - start_time
         logger.info(

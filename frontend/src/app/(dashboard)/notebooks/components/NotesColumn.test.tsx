@@ -39,6 +39,10 @@ vi.mock('@/lib/stores/notebook-columns-store', () => ({
   }),
 }))
 
+vi.mock('./NotebookPodcasts', () => ({
+  NotebookPodcasts: () => <div data-testid="notebook-podcasts" />,
+}))
+
 const notebookId = 'notebook:123'
 const existingNote: NoteResponse = {
   id: 'note:456',

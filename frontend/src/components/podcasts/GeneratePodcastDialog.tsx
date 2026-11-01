@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 import { ContentSelectionPanel } from './ContentSelectionPanel'
 import {
@@ -33,6 +34,7 @@ import {
   SourceMode,
   getSourceDefaultMode,
   hasSelections,
+  resolveNotebookChoice,
   selectionsToContextConfigs,
 } from './generate-podcast-selection'
 
@@ -41,9 +43,11 @@ const TOKEN_COUNT_DEBOUNCE_MS = 400
 interface GeneratePodcastDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** Notebook the dialog was opened from; preferred filing target. */
+  defaultNotebookId?: string
 }
 
-export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDialogProps) {
+export function GeneratePodcastDialog({ open, onOpenChange, defaultNotebookId }: GeneratePodcastDialogProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
   const [expandedNotebooks, setExpandedNotebooks] = useState<string[]>([])
@@ -51,6 +55,7 @@ export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDia
   const [episodeProfileId, setEpisodeProfileId] = useState<string>('')
   const [episodeName, setEpisodeName] = useState('')
   const [instructions, setInstructions] = useState('')
+  const [chosenNotebookId, setChosenNotebookId] = useState<string | null>(null)
 
   const [isBuildingContext, setIsBuildingContext] = useState(false)
   const [tokenCount, setTokenCount] = useState<number>(0)
@@ -191,6 +196,7 @@ export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDia
     setEpisodeProfileId('')
     setEpisodeName('')
     setInstructions('')
+    setChosenNotebookId(null)
     setTokenCount(0)
     setCharCount(0)
   }, [])
@@ -253,6 +259,20 @@ export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDia
 
     return () => clearTimeout(timer)
   }, [open, selections])
+
+  // Expand the originating notebook so its content is immediately pickable
+  useEffect(() => {
+    if (open && defaultNotebookId) {
+      setExpandedNotebooks((prev) =>
+        prev.includes(defaultNotebookId) ? prev : [...prev, defaultNotebookId]
+      )
+    }
+  }, [open, defaultNotebookId])
+
+  const notebookChoice = useMemo(
+    () => resolveNotebookChoice(selections, chosenNotebookId, defaultNotebookId),
+    [selections, chosenNotebookId, defaultNotebookId]
+  )
 
   const selectedEpisodeProfile = useMemo(() => {
     if (!episodeProfileId) {
@@ -416,6 +436,15 @@ export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDia
       return
     }
 
+    if (notebookChoice.needsChoice) {
+      toast({
+        title: t('podcasts.notebookChoiceRequired'),
+        description: t('podcasts.notebookChoiceRequiredDesc'),
+        variant: 'destructive',
+      })
+      return
+    }
+
     setIsBuildingContext(true)
     try {
       const content = await buildContentFromSelections()
@@ -433,6 +462,7 @@ export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDia
         speaker_profile: speakerProfileRef,
         episode_name: episodeName.trim(),
         content,
+        notebook_id: notebookChoice.notebookId ?? undefined,
         briefing_suffix: instructions.trim() ? instructions.trim() : undefined,
       }
 
@@ -462,6 +492,7 @@ export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDia
     episodeName,
     generatePodcast,
     instructions,
+    notebookChoice,
     onOpenChange,
     resetState,
     selectedEpisodeProfile,
@@ -579,10 +610,32 @@ export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDia
               )}
             </div>
 
+            {notebookChoice.involved.length > 1 ? (
+              <div className="space-y-2" data-testid="notebook-choice">
+                <Label>{t('podcasts.fileUnderNotebook')}</Label>
+                <p className="text-xs text-muted-foreground">
+                  {t('podcasts.fileUnderNotebookDesc')}
+                </p>
+                <RadioGroup
+                  value={notebookChoice.notebookId ?? ''}
+                  onValueChange={setChosenNotebookId}
+                >
+                  {notebookChoice.involved.map((notebookId) => (
+                    <div key={notebookId} className="flex items-center gap-2">
+                      <RadioGroupItem value={notebookId} id={`file-under-${notebookId}`} />
+                      <Label htmlFor={`file-under-${notebookId}`} className="font-normal">
+                        {notebooks.find((nb) => nb.id === notebookId)?.name ?? notebookId}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+            ) : null}
+
             <div className="flex flex-col gap-3">
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting}
+                disabled={isSubmitting || notebookChoice.needsChoice}
                 className="w-full"
               >
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

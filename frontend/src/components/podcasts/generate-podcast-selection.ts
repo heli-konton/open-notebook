@@ -87,3 +87,49 @@ export function selectionsToContextConfigs(
 
   return configs
 }
+
+/** Notebook ids that currently have at least one active source/note selection. */
+export function getInvolvedNotebookIds(
+  selections: Record<string, NotebookSelection>
+): string[] {
+  return Object.entries(selections)
+    .filter(([, selection]) => hasSelections(selection))
+    .map(([notebookId]) => notebookId)
+}
+
+export interface NotebookChoice {
+  /** Notebook the episode will be filed under, or null if none/unchosen. */
+  notebookId: string | null
+  /** True when the user must pick one of `involved` before submitting. */
+  needsChoice: boolean
+  involved: string[]
+}
+
+/**
+ * Decide which notebook an episode is filed under.
+ * - exactly one involved notebook: use it automatically
+ * - several: the user's pick (or the notebook the dialog was opened from, if
+ *   it is among them); otherwise unresolved and a choice is required
+ * - none: fall back to the notebook the dialog was opened from (if any)
+ */
+export function resolveNotebookChoice(
+  selections: Record<string, NotebookSelection>,
+  chosenNotebookId?: string | null,
+  defaultNotebookId?: string | null
+): NotebookChoice {
+  const involved = getInvolvedNotebookIds(selections)
+
+  if (involved.length === 0) {
+    return { notebookId: defaultNotebookId ?? null, needsChoice: false, involved }
+  }
+  if (involved.length === 1) {
+    return { notebookId: involved[0], needsChoice: false, involved }
+  }
+  if (chosenNotebookId && involved.includes(chosenNotebookId)) {
+    return { notebookId: chosenNotebookId, needsChoice: false, involved }
+  }
+  if (defaultNotebookId && involved.includes(defaultNotebookId)) {
+    return { notebookId: defaultNotebookId, needsChoice: false, involved }
+  }
+  return { notebookId: null, needsChoice: true, involved }
+}
